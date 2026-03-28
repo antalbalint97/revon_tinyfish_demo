@@ -19,6 +19,20 @@ interface InspectedCandidate {
   inspection: WebsiteInspection;
 }
 
+export interface DiscoveryDependencies {
+  discoverCompanies: typeof discoverCompanies;
+  inspectWebsite: typeof inspectWebsite;
+  createMockDirectoryDiscovery: typeof createMockDirectoryDiscovery;
+  createMockWebsiteInspection: typeof createMockWebsiteInspection;
+}
+
+const defaultDependencies: DiscoveryDependencies = {
+  discoverCompanies,
+  inspectWebsite,
+  createMockDirectoryDiscovery,
+  createMockWebsiteInspection,
+};
+
 function resolveLiveMode(): { mode: RunMode; reason?: string; allowFallback: boolean } {
   const forceMock = (process.env.TINYFISH_FORCE_MOCK ?? "false").toLowerCase() === "true";
   const hasApiKey = Boolean(process.env.TINYFISH_API_KEY?.trim());
@@ -47,7 +61,13 @@ function combineStatus(base: RunStatus, degraded: boolean): Extract<RunStatus, "
   return degraded || base === "partial" ? "partial" : "completed";
 }
 
-async function executeRun(runId: string, input: IcpInput, initialMode: RunMode, allowFallback: boolean): Promise<void> {
+async function executeRun(
+  runId: string,
+  input: IcpInput,
+  initialMode: RunMode,
+  allowFallback: boolean,
+  dependencies: DiscoveryDependencies,
+): Promise<void> {
   let mode: RunMode = initialMode;
   let quality: RunQuality = "healthy";
   const runNotes: string[] = [];
@@ -58,10 +78,10 @@ async function executeRun(runId: string, input: IcpInput, initialMode: RunMode, 
 
     let discovery;
     if (mode === "mock") {
-      discovery = createMockDirectoryDiscovery(input);
+      discovery = dependencies.createMockDirectoryDiscovery(input);
     } else {
       try {
-        discovery = await discoverCompanies(apiKey!, input);
+        discovery = await dependencies.discoverCompanies(apiKey!, input);
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "TinyFish directory discovery failed unexpectedly.";
@@ -80,7 +100,7 @@ async function executeRun(runId: string, input: IcpInput, initialMode: RunMode, 
           modeReason: "Live TinyFish discovery failed and the run degraded into explicit mock fallback mode.",
           notes: runNotes,
         });
-        discovery = createMockDirectoryDiscovery(input);
+        discovery = dependencies.createMockDirectoryDiscovery(input);
       }
     }
 
@@ -131,8 +151,8 @@ async function executeRun(runId: string, input: IcpInput, initialMode: RunMode, 
 
       const inspection =
         mode === "mock"
-          ? createMockWebsiteInspection(candidate, input, index)
-          : await inspectWebsite(apiKey!, input, candidate);
+          ? dependencies.createMockWebsiteInspection(candidate, input, index)
+          : await dependencies.inspectWebsite(apiKey!, input, candidate);
 
       if (inspection.inspectionStatus === "failed") {
         websiteFailures += 1;
@@ -250,7 +270,10 @@ async function executeRun(runId: string, input: IcpInput, initialMode: RunMode, 
   }
 }
 
-export function startDiscoveryRun(input: IcpInput): DemoRun {
+export function startDiscoveryRun(
+  input: IcpInput,
+  dependencies: DiscoveryDependencies = defaultDependencies,
+): DemoRun {
   const resolved = resolveLiveMode();
   const run = createRun(input, resolved.reason
     ? {
@@ -262,6 +285,6 @@ export function startDiscoveryRun(input: IcpInput): DemoRun {
       });
 
   console.log(`[tinyfish-demo] starting discovery run ${run.id} in ${resolved.mode} mode`);
-  void executeRun(run.id, input, resolved.mode, resolved.allowFallback);
+  void executeRun(run.id, input, resolved.mode, resolved.allowFallback, dependencies);
   return run;
 }

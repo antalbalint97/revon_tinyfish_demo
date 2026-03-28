@@ -1,73 +1,14 @@
 import { useState, type FormEvent } from "react";
 import { icpInputSchema, type IcpInput } from "@revon-tinyfish/contracts";
+import { DEFAULT_DEMO_INPUT, DEMO_PRESETS, type DemoPreset } from "../demoPresets";
 
 interface IcpFormProps {
   isSubmitting: boolean;
   onSubmit: (input: IcpInput) => Promise<void>;
 }
 
-interface DemoPreset {
-  id: string;
-  label: string;
-  note: string;
-  recommended?: boolean;
-  input: IcpInput;
-}
-
-const DEMO_PRESETS: DemoPreset[] = [
-  {
-    id: "london-digital-marketing",
-    label: "London digital agencies",
-    note: "Recommended live demo path",
-    recommended: true,
-    input: {
-      targetMarket: "Digital marketing",
-      location: "London",
-      companySize: "11-50",
-      keywords: "B2B, SaaS, growth",
-      decisionMakerRole: "Founder",
-      maxResults: 5,
-    },
-  },
-  {
-    id: "berlin-web-development",
-    label: "Berlin web dev shops",
-    note: "Good fallback live preset",
-    input: {
-      targetMarket: "Web development",
-      location: "Berlin",
-      companySize: "11-50",
-      keywords: "B2B, product, SaaS",
-      decisionMakerRole: "Managing Director",
-      maxResults: 4,
-    },
-  },
-  {
-    id: "amsterdam-seo",
-    label: "Amsterdam SEO agencies",
-    note: "Smaller, focused prospect list",
-    input: {
-      targetMarket: "SEO",
-      location: "Amsterdam",
-      companySize: "11-50",
-      keywords: "lead generation, B2B",
-      decisionMakerRole: "Founder",
-      maxResults: 4,
-    },
-  },
-];
-
-const DEFAULT_INPUT: IcpInput = DEMO_PRESETS[0]?.input ?? {
-  targetMarket: "Digital marketing",
-  location: "London",
-  companySize: "11-50",
-  keywords: "B2B, SaaS, growth",
-  decisionMakerRole: "Founder",
-  maxResults: 5,
-};
-
 export function IcpForm({ isSubmitting, onSubmit }: IcpFormProps) {
-  const [form, setForm] = useState<IcpInput>(DEFAULT_INPUT);
+  const [form, setForm] = useState<IcpInput>(DEFAULT_DEMO_INPUT);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {

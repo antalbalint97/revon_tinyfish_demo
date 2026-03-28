@@ -17,10 +17,14 @@
     "build:api": "npm --workspace @revon-tinyfish/api run build",
     "build:web": "npm --workspace @revon-tinyfish/web run build",
     "typecheck": "npm run build:contracts && npm run typecheck --workspaces --if-present",
+    "smoke:fixtures": "tsx tests/smoke/fixture-generator.ts",
+    "test:smoke": "npm run smoke:fixtures && npm exec vitest -- run --config vitest.smoke.config.ts",
     "postinstall": "npm run build:contracts"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5",
+    "tsx": "^4.21.0",
+    "vitest": "^4.0.7",
     "typescript": "^5.9.3"
   }
 }

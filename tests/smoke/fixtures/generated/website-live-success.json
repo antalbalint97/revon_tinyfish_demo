@@ -1,0 +1,55 @@
+{
+  "raw": {
+    "summary": "Northbridge Growth is a London agency focused on B2B SaaS demand generation.",
+    "services": [
+      "Demand generation",
+      "Paid social",
+      "Lifecycle marketing"
+    ],
+    "emails": [
+      "hello@northbridgegrowth.co.uk"
+    ],
+    "contact_page_url": "https://www.northbridgegrowth.co.uk/contact",
+    "about_page_url": "https://www.northbridgegrowth.co.uk/about",
+    "team_page_url": "https://www.northbridgegrowth.co.uk/team",
+    "team": [
+      {
+        "name": "Maya Ellis",
+        "role": "Founder"
+      },
+      {
+        "name": "Sam Rowe",
+        "role": "Growth Director"
+      }
+    ],
+    "signals": [
+      "B2B SaaS specialist",
+      "Offers demand generation programs"
+    ],
+    "evidence": [
+      {
+        "kind": "homepage",
+        "source_url": "https://www.northbridgegrowth.co.uk",
+        "source_label": "homepage",
+        "title": "Homepage positioning",
+        "summary": "Homepage positions the agency around B2B SaaS demand generation.",
+        "snippet": "Demand generation for B2B SaaS teams",
+        "confidence": "high",
+        "quality_note": null
+      },
+      {
+        "kind": "contact_page",
+        "source_url": "https://www.northbridgegrowth.co.uk/contact",
+        "source_label": "contact page",
+        "title": "Visible contact email",
+        "summary": "A public email address is visible on the contact page.",
+        "snippet": "hello@northbridgegrowth.co.uk",
+        "confidence": "high",
+        "quality_note": null
+      }
+    ],
+    "missing_fields": [],
+    "uncertain_fields": [],
+    "quality_notes": []
+  }
+}

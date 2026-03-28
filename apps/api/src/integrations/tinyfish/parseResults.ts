@@ -114,7 +114,7 @@ function repairJsonText(text: string): { value: unknown; repairNotes: string[] }
     { text: stripCodeFences(text), note: "TinyFish returned fenced JSON. Fence repair was applied." },
     {
       text: extractBalancedJson(stripCodeFences(text)) ?? "",
-      note: "TinyFish returned wrapped JSON. Embedded JSON was extracted.",
+      note: "TinyFish returned wrapped JSON. Embedded JSON repair was applied.",
     },
   ];
 

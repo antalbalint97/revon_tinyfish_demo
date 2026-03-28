@@ -212,3 +212,7 @@ export function updatePushState(runId: string, patch: Partial<RunPushState>): De
     };
   });
 }
+
+export function resetRunStore(): void {
+  runs.clear();
+}

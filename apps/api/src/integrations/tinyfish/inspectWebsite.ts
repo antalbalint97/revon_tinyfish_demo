@@ -16,7 +16,6 @@ export async function inspectWebsite(
       apiKey,
       url: candidate.websiteUrl,
       goal: buildWebsiteGoal(input),
-      timeoutMs: 60_000,
     });
 
     return parseWebsiteInspection(raw, candidate.websiteUrl);

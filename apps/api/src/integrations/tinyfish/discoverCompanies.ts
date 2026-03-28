@@ -16,7 +16,6 @@ export async function discoverCompanies(apiKey: string, input: IcpInput): Promis
     apiKey,
     url: directoryUrl,
     goal: buildDirectoryGoal(input),
-    timeoutMs: 90_000,
   });
   const parsed = parseDirectoryCandidates(raw);
 

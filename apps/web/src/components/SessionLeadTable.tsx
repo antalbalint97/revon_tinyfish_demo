@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { PersistedLeadRecord } from "@revon-tinyfish/contracts";
+import { getEffectiveQualificationState } from "../lib/leadQualification";
+import { updateLeadQualification } from "../lib/api";
 
 interface SessionLeadTableProps {
   leads: PersistedLeadRecord[];
@@ -32,8 +34,10 @@ function sortedLeads(
       av = CONFIDENCE_ORDER[a.score.confidence as keyof typeof CONFIDENCE_ORDER] ?? 0;
       bv = CONFIDENCE_ORDER[b.score.confidence as keyof typeof CONFIDENCE_ORDER] ?? 0;
     } else if (key === "qualification") {
-      av = QUAL_ORDER[a.score.qualificationState as keyof typeof QUAL_ORDER] ?? 0;
-      bv = QUAL_ORDER[b.score.qualificationState as keyof typeof QUAL_ORDER] ?? 0;
+      const aq = getEffectiveQualificationState(a);
+      const bq = getEffectiveQualificationState(b);
+      av = QUAL_ORDER[aq as keyof typeof QUAL_ORDER] ?? 0;
+      bv = QUAL_ORDER[bq as keyof typeof QUAL_ORDER] ?? 0;
     } else {
       av = a.revonStatusLabel === "Pushed to Revon" ? 2 : a.revonStatusLabel === "Dry run" ? 1 : 0;
       bv = b.revonStatusLabel === "Pushed to Revon" ? 2 : b.revonStatusLabel === "Dry run" ? 1 : 0;
@@ -42,7 +46,7 @@ function sortedLeads(
   });
 }
 
-function QualBadge({ state }: { state: string }) {
+function QualBadge({ state, isOverride }: { state: string; isOverride?: boolean }) {
   const cls =
     state === "qualified"
       ? "qual-qualified"
@@ -51,7 +55,12 @@ function QualBadge({ state }: { state: string }) {
         : "qual-unqualified";
   const label =
     state === "qualified" ? "Qualified" : state === "review" ? "Review" : "Not qualified";
-  return <span className={`qual-badge ${cls}`}>{label}</span>;
+  return (
+    <div className="qual-badge-container">
+      <span className={`qual-badge ${cls}`}>{label}</span>
+      {isOverride && <span className="override-badge">Manual</span>}
+    </div>
+  );
 }
 
 function ConfidencePill({ level }: { level: string }) {
@@ -129,8 +138,48 @@ export function SessionLeadTable({
     }
   }
 
-  const qualifiedLeads = leads.filter((l) => l.score.qualificationState === "qualified");
-  const displayed = sortedLeads(leads, sortKey, sortDir);
+  const [localLeads, setLocalLeads] = useState<PersistedLeadRecord[]>(leads);
+
+  useEffect(() => {
+    setLocalLeads(leads);
+  }, [leads]);
+
+  const effectiveLeads = localLeads;
+
+  const qualifiedLeads = effectiveLeads.filter(
+    (l) => getEffectiveQualificationState(l) === "qualified",
+  );
+  const displayed = sortedLeads(effectiveLeads, sortKey, sortDir);
+
+  async function handleOverride(
+    leadId: string,
+    state: "qualified" | "review" | "unqualified" | null,
+  ) {
+    // Find the session ID from the first lead
+    const firstLead = effectiveLeads[0];
+    if (!firstLead) return;
+    const sessionId = firstLead.agentContext.agentSessionId;
+
+    // Optimistic UI update
+    setLocalLeads((current) =>
+      current.map((l) =>
+        l.id === leadId
+          ? {
+              ...l,
+              operatorQualificationState: state,
+              operatorOverrideUpdatedAt: new Date().toISOString(),
+            }
+          : l,
+      ),
+    );
+
+    try {
+      await updateLeadQualification(sessionId, leadId, { operatorQualificationState: state });
+    } catch (error) {
+      console.error("Failed to update lead qualification:", error);
+      // Revert on error? For now just log.
+    }
+  }
 
   function handleSelectAllQualified() {
     if (onSelectLeads) {
@@ -207,6 +256,9 @@ export function SessionLeadTable({
             {displayed.map((lead, index) => {
               const checked = selectedLeadIds.includes(lead.id);
               const isActive = selectedLeadId === lead.id;
+              const effectiveQual = getEffectiveQualificationState(lead);
+              const isOverride = lead.operatorQualificationState !== null;
+
               return (
                 <tr
                   className={isActive ? "active" : ""}
@@ -225,7 +277,25 @@ export function SessionLeadTable({
                   <td>{lead.companyName}</td>
                   <td>{lead.companyDomain}</td>
                   <td>
-                    <QualBadge state={lead.score.qualificationState} />
+                    <div className="qual-cell">
+                      <QualBadge isOverride={isOverride} state={effectiveQual} />
+                      <select
+                        className="qual-override-select"
+                        onClick={(e) => e.stopPropagation()}
+                        value={lead.operatorQualificationState ?? ""}
+                        onChange={(e) =>
+                          handleOverride(
+                            lead.id,
+                            (e.target.value as any) || null,
+                          )
+                        }
+                      >
+                        <option value="">Auto</option>
+                        <option value="qualified">Qualified</option>
+                        <option value="review">Review</option>
+                        <option value="unqualified">Unqualified</option>
+                      </select>
+                    </div>
                   </td>
                   <td>
                     <ConfidencePill level={lead.score.confidence} />

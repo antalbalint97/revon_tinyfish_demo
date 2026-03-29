@@ -14,6 +14,7 @@ import { PushToRevonButton } from "../components/PushToRevonButton";
 import { RunTimeline } from "../components/RunTimeline";
 import { TelemetryPanel } from "../components/TelemetryPanel";
 import { logWebTrace } from "../lib/debugTrace";
+import { getEffectiveQualificationState } from "../lib/leadQualification";
 import {
   getRevonStatus,
   getRun,
@@ -167,7 +168,8 @@ export function ConsoleRunsPage() {
   useEffect(() => {
     if (!selectedLeadId && run?.leads[0]) {
       const preferredLead =
-        run.leads.find((lead) => lead.score.qualificationState === "qualified") ?? run.leads[0];
+        run.leads.find((lead) => getEffectiveQualificationState(lead) === "qualified") ??
+        run.leads[0];
       setSelectedLeadId(preferredLead.id);
     }
   }, [run, selectedLeadId]);
@@ -216,7 +218,7 @@ export function ConsoleRunsPage() {
 
     try {
       const leadIds = run.leads
-        .filter((lead) => lead.score.qualificationState === "qualified")
+        .filter((lead) => getEffectiveQualificationState(lead) === "qualified")
         .map((lead) => lead.id);
       const updatedRun = await pushQualifiedLeads(run.id, leadIds);
       setRun(updatedRun);

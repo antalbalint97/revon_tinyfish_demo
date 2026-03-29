@@ -263,3 +263,22 @@ export async function getRevonStatus(): Promise<RevonAdapterStatus> {
   const data = await request<unknown>("/api/revon/status");
   return revonAdapterStatusSchema.parse(data);
 }
+
+export async function updateLeadQualification(
+  sessionId: string,
+  leadId: string,
+  update: {
+    operatorQualificationState: "qualified" | "review" | "unqualified" | null;
+    reason?: string;
+  },
+): Promise<PersistedSessionDetail> {
+  const data = await request<unknown>(
+    `/api/sessions/${sessionId}/leads/${leadId}/qualification`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(update),
+    },
+  );
+
+  return persistedSessionDetailSchema.parse(data);
+}

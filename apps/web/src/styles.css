@@ -658,6 +658,40 @@ select {
 .qual-review { background: rgba(217, 134, 50, 0.14); color: #8e5a16; }
 .qual-unqualified { background: rgba(49, 38, 26, 0.07); color: var(--muted); }
 
+.qual-badge-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.override-badge {
+  display: inline-flex;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: white;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.qual-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qual-override-select {
+  font-size: 0.75rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid var(--stroke);
+  background: white;
+  color: var(--muted);
+}
+
 /* ─── Confidence pills ───────────────────────────────────────────────── */
 
 .confidence-pill {

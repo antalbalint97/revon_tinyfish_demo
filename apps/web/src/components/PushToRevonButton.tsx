@@ -1,4 +1,5 @@
 import type { DemoRun, RevonAdapterStatus } from "@revon-tinyfish/contracts";
+import { getEffectiveQualificationState } from "../lib/leadQualification";
 
 interface PushToRevonButtonProps {
   run: DemoRun | null;
@@ -30,7 +31,7 @@ export function PushToRevonButton({
   const qualifiedCount =
     run?.leads.filter(
       (lead) =>
-        lead.score.qualificationState === "qualified" &&
+        getEffectiveQualificationState(lead) === "qualified" &&
         (!selectedLeadIdSet || selectedLeadIdSet.has(lead.id)),
     ).length ?? 0;
   const canPush = Boolean(run && (run.status === "completed" || run.status === "partial") && qualifiedCount > 0);

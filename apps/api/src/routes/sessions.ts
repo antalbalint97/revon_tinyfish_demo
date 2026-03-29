@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { pushRunRequestSchema, type PersistedLeadRevonState } from "@revon-tinyfish/contracts";
 import { pushQualifiedLeadsToRevon } from "../integrations/revon/client.js";
+import { getEffectiveQualificationState } from "../domain/leads/effectiveQualification.js";
 import {
   buildPersistedSessionCsvExport,
   buildPersistedSessionJsonExport,
@@ -10,6 +11,7 @@ import {
   serializePersistedSessionJsonExport,
   updatePersistedLeadRevonStates,
   updatePersistedImportState,
+  updatePersistedLeadQualification,
 } from "../services/persistenceService.js";
 
 const router = Router();
@@ -51,7 +53,7 @@ async function handlePushToRevon(request: Request, response: Response) {
 
   const requestedLeadIds = new Set(parsed.data.leadIds ?? session.leads.map((lead) => lead.id));
   const leadsToPush = session.leads.filter(
-    (lead) => requestedLeadIds.has(lead.id) && lead.score.qualificationState === "qualified",
+    (lead) => requestedLeadIds.has(lead.id) && getEffectiveQualificationState(lead) === "qualified",
   );
 
   if (leadsToPush.length === 0) {
@@ -291,5 +293,35 @@ router.get("/:sessionId/export", async (request: Request, response: Response) =>
 
 router.post("/:sessionId/push", handlePushToRevon);
 router.post("/:sessionId/push-to-revon", handlePushToRevon);
+
+router.patch("/:sessionId/leads/:leadId/qualification", async (request: Request, response: Response) => {
+  const { sessionId, leadId } = request.params;
+  if (!sessionId || !leadId) {
+    response.status(400).json({ error: "Session ID and Lead ID are required." });
+    return;
+  }
+
+  const { operatorQualificationState, reason } = request.body;
+  if (
+    operatorQualificationState !== undefined &&
+    !["qualified", "review", "unqualified", null].includes(operatorQualificationState)
+  ) {
+    response.status(400).json({ error: "Invalid qualification state." });
+    return;
+  }
+
+  try {
+    await updatePersistedLeadQualification(sessionId, leadId, {
+      operatorQualificationState,
+      reason,
+    });
+
+    const updatedSession = await getPersistedSession(sessionId);
+    response.json(updatedSession);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to update lead qualification.";
+    response.status(500).json({ error: message });
+  }
+});
 
 export default router;

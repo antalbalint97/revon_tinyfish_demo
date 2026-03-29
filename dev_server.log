@@ -1,0 +1,66 @@
+
+> revon-tinyfish-demo@0.0.0 dev
+> npm-run-all --parallel dev:contracts dev:api dev:web
+
+
+> revon-tinyfish-demo@0.0.0 dev:contracts
+> npm --workspace @revon-tinyfish/contracts run dev
+
+
+> revon-tinyfish-demo@0.0.0 dev:api
+> npm --workspace @revon-tinyfish/api run dev
+
+
+> revon-tinyfish-demo@0.0.0 dev:web
+> npm --workspace @revon-tinyfish/web run dev
+
+
+> @revon-tinyfish/api@0.0.0 dev
+> tsx watch src/index.ts
+
+
+> @revon-tinyfish/contracts@0.0.0 dev
+> tsc -p tsconfig.json -w --preserveWatchOutput
+
+
+> @revon-tinyfish/web@0.0.0 dev
+> vite
+
+
+  VITE v6.4.1  ready in 279 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+
+5:11:16 PM - Starting compilation in watch mode...
+
+(node:4022) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+[dotenv@17.3.1] injecting env (0) from ../../.env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+[dotenv@17.3.1] injecting env (0) from ../.env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+TINYFISH_API_KEY loaded: false
+TINYFISH_FORCE_MOCK: undefined
+[tinyfish-demo] api listening on port 8787 | env=development | cors=same-origin + localhost dev origins
+5:11:19 PM [tsx] change in ./../../packages/contracts/dist/lead.js Restarting...
+c5:11:20 PM [tsx] change in ./../../packages/contracts/dist/persistence.js Restarting...
+c
+5:11:20 PM - Found 0 errors. Watching for file changes.
+5:11:20 PM [tsx] change in ./../../packages/contracts/dist/index.js Restarting...
+c(node:4155) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+[dotenv@17.3.1] injecting env (0) from ../../.env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+[dotenv@17.3.1] injecting env (0) from ../.env -- tip: ⚙️  override existing env vars with { override: true }
+TINYFISH_API_KEY loaded: false
+TINYFISH_FORCE_MOCK: undefined
+[tinyfish-demo] api listening on port 8787 | env=development | cors=same-origin + localhost dev origins
+[tinyfish-debug][api] ts=2026-03-29T17:14:49.936Z component=POST /api/runs.received invocation=fresh correlationId=web-fe0ba0cc-42f6-4238-a202-ddd6c8b3e9bd runId=- method=POST path=/api/runs
+[tinyfish-debug][api] ts=2026-03-29T17:14:49.938Z component=POST /api/runs.valid invocation=fresh correlationId=web-fe0ba0cc-42f6-4238-a202-ddd6c8b3e9bd runId=- payloadSignature=software companies in sf|san francisco|11-50|b2b clients, performance marketing, paid media|marketing director|5 experimentLabel=q2_uk_digital_agencies
+[tinyfish-debug][api] ts=2026-03-29T17:14:49.952Z component=startDiscoveryRun invocation=fresh correlationId=web-fe0ba0cc-42f6-4238-a202-ddd6c8b3e9bd runId=a6311a76-890b-4f01-ba99-ba9b0cc30595 mode=mock allowFallback=true payloadSignature=software companies in sf|san francisco|11-50|b2b clients, performance marketing, paid media|marketing director|5 experimentLabel=q2_uk_digital_agencies
+[tinyfish-demo] starting discovery run a6311a76-890b-4f01-ba99-ba9b0cc30595 in mock mode
+[tinyfish-debug][api] ts=2026-03-29T17:14:49.953Z component=discoveryRun.executeRun.start invocation=fresh correlationId=web-fe0ba0cc-42f6-4238-a202-ddd6c8b3e9bd runId=a6311a76-890b-4f01-ba99-ba9b0cc30595 initialMode=mock allowFallback=true payloadSignature=software companies in sf|san francisco|11-50|b2b clients, performance marketing, paid media|marketing director|5
+[tinyfish-debug][api] ts=2026-03-29T17:14:50.008Z component=inspection.session.metrics invocation=fresh correlationId=- runId=a6311a76-890b-4f01-ba99-ba9b0cc30595 mode=mock wallTimeMs=55 usableLeadCount=5 qualifiedLeadCount=5
+[tinyfish-debug][api] ts=2026-03-29T17:14:50.008Z component=POST /api/runs.accepted invocation=fresh correlationId=web-fe0ba0cc-42f6-4238-a202-ddd6c8b3e9bd runId=a6311a76-890b-4f01-ba99-ba9b0cc30595 payloadSignature=software companies in sf|san francisco|11-50|b2b clients, performance marketing, paid media|marketing director|5 mode=mock experimentLabel=q2_uk_digital_agencies
+[tinyfish-debug][api] ts=2026-03-29T17:14:50.029Z component=persistence.session.saved invocation=fresh correlationId=web-fe0ba0cc-42f6-4238-a202-ddd6c8b3e9bd runId=a6311a76-890b-4f01-ba99-ba9b0cc30595 status=running leadCount=0 qualifiedLeadCount=0
+[tinyfish-debug][api] ts=2026-03-29T17:14:50.029Z component=persistence.session.saved invocation=repeat#2 correlationId=web-fe0ba0cc-42f6-4238-a202-ddd6c8b3e9bd runId=a6311a76-890b-4f01-ba99-ba9b0cc30595 status=completed leadCount=5 qualifiedLeadCount=5
+[tinyfish-debug][api] ts=2026-03-29T17:14:50.029Z component=telemetry.session.finalized invocation=fresh correlationId=web-fe0ba0cc-42f6-4238-a202-ddd6c8b3e9bd runId=a6311a76-890b-4f01-ba99-ba9b0cc30595 experimentLabel=q2_uk_digital_agencies wallClockMs=36 qualifiedLeads=5 usableLeads=5 partialOrFailedPercentage=0 creditsPerSession=null
+5:16:39 PM [vite] (client) hmr update /src/components/SessionLeadTable.tsx

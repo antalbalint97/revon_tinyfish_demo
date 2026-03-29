@@ -25,6 +25,7 @@ import {
   type SessionTelemetry,
 } from "@revon-tinyfish/contracts";
 import { mapLeadToRevonRecords } from "../integrations/revon/mapper.js";
+import { getEffectiveQualificationState } from "../domain/leads/effectiveQualification.js";
 import { getDatabase, runMigrations } from "../db/database.js";
 
 function toJsonString(value: unknown): string {
@@ -160,7 +161,10 @@ function readExistingLeadRevonStates(sessionId: string): Map<string, PersistedLe
           revon_last_attempted_at,
           revon_last_succeeded_at,
           revon_last_request_id,
-          revon_last_error
+          revon_last_error,
+          operator_qualification_state,
+          operator_override_reason,
+          operator_override_updated_at
         FROM discovery_leads
         WHERE session_id = ?
       `,
@@ -333,7 +337,9 @@ export async function persistDiscoveryRun(
       importError: run.push.error ?? null,
       importPushedAt: run.push.pushedAt ?? null,
       leadCount: run.leads.length,
-      qualifiedLeadCount: run.leads.filter((lead) => lead.score.qualificationState === "qualified").length,
+      qualifiedLeadCount: run.leads.filter(
+        (lead) => (lead.operatorQualificationState ?? lead.score.qualificationState) === "qualified",
+      ).length,
       usableLeadCount: run.leads.filter((lead) => lead.inspectionStatus !== "failed").length,
       publicEmailCount: countPublicEmails(run.leads),
       decisionMakerCount: countDecisionMakers(run.leads),
@@ -352,7 +358,8 @@ export async function persistDiscoveryRun(
           field_assessments_json, raw_extraction_json, score_explanations_json,
           agent_context_json, lead_snapshot_json, revon_imported_to_revon, revon_push_status,
           revon_last_attempted_at, revon_last_succeeded_at, revon_last_request_id,
-          revon_last_error
+          revon_last_error, operator_qualification_state, operator_override_reason,
+          operator_override_updated_at
         ) VALUES (
           @id, @sessionId, @rankOrder, @createdAt, @updatedAt, @companyName, @companyDomain,
           @websiteUrl, @directoryUrl, @captureMode, @inspectionStatus, @qualificationState,
@@ -362,7 +369,8 @@ export async function persistDiscoveryRun(
           @fieldAssessmentsJson, @rawExtractionJson, @scoreExplanationsJson,
           @agentContextJson, @leadSnapshotJson, @revonImportedToRevon, @revonPushStatus,
           @revonLastAttemptedAt, @revonLastSucceededAt, @revonLastRequestId,
-          @revonLastError
+          @revonLastError, @operatorQualificationState, @operatorOverrideReason,
+          @operatorOverrideUpdatedAt
         )
       `,
     );
@@ -428,6 +436,9 @@ export async function persistDiscoveryRun(
         revonLastSucceededAt: existingRevonState.lastSucceededAt,
         revonLastRequestId: existingRevonState.requestId,
         revonLastError: existingRevonState.error,
+        operatorQualificationState: lead.operatorQualificationState ?? null,
+        operatorOverrideReason: lead.operatorOverrideReason ?? null,
+        operatorOverrideUpdatedAt: lead.operatorOverrideUpdatedAt ?? null,
       });
 
       lead.contacts.forEach((contact) => {
@@ -596,6 +607,9 @@ export async function getPersistedSession(sessionId: string): Promise<PersistedS
         ...baseLead,
         revon,
         revonStatusLabel: deriveRevonStatusLabel(revon.pushStatus, revon.importedToRevon),
+        operatorQualificationState: asNullableString(row.operator_qualification_state),
+        operatorOverrideReason: asNullableString(row.operator_override_reason),
+        operatorOverrideUpdatedAt: asNullableString(row.operator_override_updated_at),
       });
     })(),
   );
@@ -629,7 +643,7 @@ export async function buildPersistedRevonExport(
   const allowedLeadIds = leadIds === undefined ? null : new Set(leadIds);
   const leads = session.leads.filter(
     (lead) =>
-      lead.score.qualificationState === "qualified" &&
+      getEffectiveQualificationState(lead) === "qualified" &&
       (!allowedLeadIds || allowedLeadIds.has(lead.id)),
   );
 
@@ -702,7 +716,7 @@ function buildPersistedSessionCsvRows(
           location: lead.location,
           company_size: lead.companySize,
           industry: lead.industry,
-          qualification_state: lead.score.qualificationState,
+          qualification_state: getEffectiveQualificationState(lead),
           priority: lead.score.priority,
           confidence: lead.score.confidence,
           inspection_status: lead.inspectionStatus,
@@ -812,6 +826,50 @@ export async function updatePersistedImportState(
   db.prepare(
     `UPDATE discovery_sessions SET ${assignments.join(", ")} WHERE id = @id`,
   ).run(params);
+}
+
+export async function updatePersistedLeadQualification(
+  sessionId: string,
+  leadId: string,
+  update: {
+    operatorQualificationState: "qualified" | "review" | "unqualified" | null;
+    reason?: string | null;
+  },
+): Promise<void> {
+  ensurePersistenceReady();
+  const db = getDatabase();
+  const updatedAt = new Date().toISOString();
+
+  db.prepare(
+    `
+      UPDATE discovery_leads
+      SET
+        updated_at = @updatedAt,
+        operator_qualification_state = @operatorQualificationState,
+        operator_override_reason = @operatorOverrideReason,
+        operator_override_updated_at = @operatorOverrideUpdatedAt
+      WHERE session_id = @sessionId AND id = @leadId
+    `,
+  ).run({
+    updatedAt,
+    sessionId,
+    leadId,
+    operatorQualificationState: update.operatorQualificationState,
+    operatorOverrideReason: update.reason ?? null,
+    operatorOverrideUpdatedAt: updatedAt,
+  });
+
+  db.prepare(
+    `
+      UPDATE discovery_sessions
+      SET qualified_lead_count = (
+        SELECT COUNT(*)
+        FROM discovery_leads
+        WHERE session_id = ? AND COALESCE(operator_qualification_state, qualification_state) = 'qualified'
+      )
+      WHERE id = ?
+    `,
+  ).run(sessionId, sessionId);
 }
 
 export async function updatePersistedLeadRevonStates(

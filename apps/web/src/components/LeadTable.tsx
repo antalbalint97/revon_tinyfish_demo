@@ -1,4 +1,5 @@
 import type { LeadRecord } from "@revon-tinyfish/contracts";
+import { getEffectiveQualificationState } from "../lib/leadQualification";
 
 interface LeadTableProps {
   leads: Array<LeadRecord & { revonStatusLabel?: string }>;
@@ -76,21 +77,26 @@ export function LeadTable({
               <div className="meta-row">
                 <span>{lead.captureMode === "live" ? "live" : "mock"}</span>
                 <span>{lead.inspectionStatus}</span>
-                <span
-                  className={`qual-badge ${
-                    lead.score.qualificationState === "qualified"
-                      ? "qual-qualified"
-                      : lead.score.qualificationState === "review"
-                        ? "qual-review"
-                        : "qual-unqualified"
-                  }`}
-                >
-                  {lead.score.qualificationState === "qualified"
-                    ? "Qualified"
-                    : lead.score.qualificationState === "review"
-                      ? "Review"
-                      : "Not qualified"}
-                </span>
+                {(() => {
+                  const state = getEffectiveQualificationState(lead);
+                  return (
+                    <span
+                      className={`qual-badge ${
+                        state === "qualified"
+                          ? "qual-qualified"
+                          : state === "review"
+                            ? "qual-review"
+                            : "qual-unqualified"
+                      }`}
+                    >
+                      {state === "qualified"
+                        ? "Qualified"
+                        : state === "review"
+                          ? "Review"
+                          : "Not qualified"}
+                    </span>
+                  );
+                })()}
                 <span className={`confidence-pill confidence-${lead.score.confidence}`}>
                   {lead.score.confidence}
                 </span>

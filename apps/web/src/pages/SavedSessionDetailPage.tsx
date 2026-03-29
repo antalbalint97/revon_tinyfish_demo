@@ -19,6 +19,7 @@ import {
   listTelemetryVariants,
   pushSavedSessionLeads,
 } from "../lib/api";
+import { getEffectiveQualificationState } from "../lib/leadQualification";
 import { toDemoRunFromPersistedSession } from "../lib/persistedRun";
 
 interface SavedSessionDetailPageProps {
@@ -102,7 +103,7 @@ export function SavedSessionDetailPage({ sessionId, onBack }: SavedSessionDetail
         setSelectedLeadIds(defaultSelectedLeadIds);
 
         const preferredLead =
-          savedSession.leads.find((lead) => lead.score.qualificationState === "qualified") ??
+          savedSession.leads.find((lead) => getEffectiveQualificationState(lead) === "qualified") ??
           savedSession.leads[0] ??
           null;
         setSelectedLeadId(preferredLead?.id ?? null);
@@ -175,7 +176,7 @@ export function SavedSessionDetailPage({ sessionId, onBack }: SavedSessionDetail
   function handleSelectAllQualified() {
     if (!session) return;
     const qualifiedIds = session.leads
-      .filter((l) => l.score.qualificationState === "qualified")
+      .filter((l) => getEffectiveQualificationState(l) === "qualified")
       .map((l) => l.id);
     setSelectedLeadIds(qualifiedIds);
   }
@@ -251,7 +252,7 @@ export function SavedSessionDetailPage({ sessionId, onBack }: SavedSessionDetail
         <>
           {(() => {
             const qualifiedCount = session.leads.filter(
-              (l) => l.score.qualificationState === "qualified",
+              (l) => getEffectiveQualificationState(l) === "qualified",
             ).length;
             return (
               <div className="summary-cards">

@@ -160,6 +160,9 @@ export const normalizedLeadRecordSchema = z.object({
   fieldAssessments: z.array(leadFieldAssessmentSchema).default([]),
   agentContext: leadAgentContextSchema,
   rawExtraction: leadRawExtractionSchema,
+  operatorQualificationState: leadQualificationStateSchema.nullable().default(null),
+  operatorOverrideReason: z.string().nullable().default(null),
+  operatorOverrideUpdatedAt: z.string().nullable().default(null),
 });
 
 export const leadScoreDimensionExplanationSchema = z.object({

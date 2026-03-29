@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { parseRouteFromHash, navigateToLauncher, navigateToSavedSession, type AppRoute } from "./lib/routes";
+import { parseRouteFromHash, navigateToConsoleSessions, navigateToSavedSession, type AppRoute } from "./lib/routes";
+import { ConsoleRunsPage } from "./pages/ConsoleRunsPage";
+import { ConsoleSessionsPage } from "./pages/ConsoleSessionsPage";
 import { SavedSessionDetailPage } from "./pages/SavedSessionDetailPage";
 import { TinyFishDemoPage } from "./pages/TinyFishDemoPage";
 
@@ -17,10 +19,18 @@ export default function App() {
     };
   }, []);
 
-  if (route.name === "saved-session") {
+  if (route.name === "console-runs") {
+    return <ConsoleRunsPage />;
+  }
+
+  if (route.name === "console-sessions") {
+    return <ConsoleSessionsPage onOpenSession={navigateToSavedSession} />;
+  }
+
+  if (route.name === "console-session") {
     return (
       <SavedSessionDetailPage
-        onBack={navigateToLauncher}
+        onBack={navigateToConsoleSessions}
         sessionId={route.sessionId}
       />
     );

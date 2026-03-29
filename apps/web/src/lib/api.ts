@@ -10,6 +10,7 @@ import {
   startRunResponseSchema,
   type DemoRun,
   type PersistedSessionDetail,
+  type PersistedSessionListResponse,
   type PersistedSessionPushResponse,
   type PersistedSessionSummary,
   type ExperimentVariantSummary,
@@ -179,6 +180,19 @@ export async function listSavedSessions(): Promise<PersistedSessionSummary[]> {
   return parsed.items;
 }
 
+export async function listSavedSessionsPage(
+  limit: number,
+  cursor?: string,
+): Promise<PersistedSessionListResponse> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (cursor) {
+    params.set("cursor", cursor);
+  }
+
+  const data = await request<unknown>(`/api/sessions?${params.toString()}`);
+  return persistedSessionListResponseSchema.parse(data);
+}
+
 export async function getSavedSession(sessionId: string): Promise<PersistedSessionDetail> {
   const data = await request<unknown>(`/api/sessions/${sessionId}`);
   return persistedSessionDetailSchema.parse(data);
@@ -196,9 +210,20 @@ function buildLeadIdsQuery(leadIds?: string[]): string {
 export async function downloadSavedSessionJsonExport(
   sessionId: string,
   leadIds?: string[],
+  options?: {
+    includeTelemetry?: boolean;
+  },
 ): Promise<Blob> {
+  const query = new URLSearchParams();
+  if (leadIds !== undefined) {
+    query.set("leadIds", leadIds.join(","));
+  }
+  if (options?.includeTelemetry === false) {
+    query.set("includeTelemetry", "false");
+  }
+
   const response = await requestRaw(
-    `/api/sessions/${sessionId}/export.json${buildLeadIdsQuery(leadIds)}`,
+    `/api/sessions/${sessionId}/export.json${query.size > 0 ? `?${query.toString()}` : ""}`,
   );
   return response.blob();
 }

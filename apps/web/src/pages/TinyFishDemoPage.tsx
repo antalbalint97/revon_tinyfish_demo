@@ -1,342 +1,181 @@
 import { useEffect, useState } from "react";
-import type {
-  DemoRun,
-  ExperimentVariantSummary,
-  PersistedSessionSummary,
-  RevonAdapterStatus,
-  SessionTelemetry,
-  StartRunRequest,
-} from "@revon-tinyfish/contracts";
-import { EvidencePanel } from "../components/EvidencePanel";
-import { IcpForm } from "../components/IcpForm";
-import { LeadTable } from "../components/LeadTable";
-import { PushToRevonButton } from "../components/PushToRevonButton";
-import { RunTimeline } from "../components/RunTimeline";
+import type { PersistedSessionSummary } from "@revon-tinyfish/contracts";
 import { SavedSessionList } from "../components/SavedSessionList";
-import { TelemetryPanel } from "../components/TelemetryPanel";
-import { logWebTrace } from "../lib/debugTrace";
-import {
-  getRevonStatus,
-  getRun,
-  getTelemetrySession,
-  listSavedSessions,
-  listTelemetryVariants,
-  pushQualifiedLeads,
-  startRun,
-} from "../lib/api";
+import { listSavedSessions } from "../lib/api";
+import { navigateToConsoleRuns, navigateToConsoleSessions } from "../lib/routes";
 
 interface TinyFishDemoPageProps {
   onOpenSavedSession: (sessionId: string) => void;
 }
 
 export function TinyFishDemoPage({ onOpenSavedSession }: TinyFishDemoPageProps) {
-  const [run, setRun] = useState<DemoRun | null>(null);
-  const [telemetry, setTelemetry] = useState<SessionTelemetry | null>(null);
-  const [variantSummary, setVariantSummary] = useState<ExperimentVariantSummary | null>(null);
   const [savedSessions, setSavedSessions] = useState<PersistedSessionSummary[]>([]);
-  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
-  const [revonStatus, setRevonStatus] = useState<RevonAdapterStatus | null>(null);
-  const [isStarting, setIsStarting] = useState(false);
-  const [isPushing, setIsPushing] = useState(false);
-  const [isRefreshingTelemetry, setIsRefreshingTelemetry] = useState(false);
-  const [isLoadingSavedSessions, setIsLoadingSavedSessions] = useState(false);
-  const [pageError, setPageError] = useState<string | null>(null);
-  const [telemetryError, setTelemetryError] = useState<string | null>(null);
-  const [savedSessionError, setSavedSessionError] = useState<string | null>(null);
-
-  async function refreshSavedSessions() {
-    setIsLoadingSavedSessions(true);
-
-    try {
-      const sessions = await listSavedSessions();
-      setSavedSessions(sessions);
-      setSavedSessionError(null);
-    } catch (error) {
-      setSavedSessionError(
-        error instanceof Error ? error.message : "Failed to load persisted discovery sessions.",
-      );
-    } finally {
-      setIsLoadingSavedSessions(false);
-    }
-  }
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    async function loadStatus() {
+    async function loadSessions() {
+      setIsLoading(true);
       try {
-        const [status, sessions] = await Promise.all([getRevonStatus(), listSavedSessions()]);
+        const sessions = await listSavedSessions();
         if (!cancelled) {
-          setRevonStatus(status);
           setSavedSessions(sessions);
-          setSavedSessionError(null);
+          setError(null);
         }
-      } catch (error) {
+      } catch (loadError) {
         if (!cancelled) {
-          setPageError(error instanceof Error ? error.message : "Failed to load Revon adapter status.");
+          setError(loadError instanceof Error ? loadError.message : "Failed to load workflow history.");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
         }
       }
     }
 
-    void loadStatus();
+    void loadSessions();
 
     return () => {
       cancelled = true;
     };
   }, []);
 
-  useEffect(() => {
-    if (!run || run.status === "running") {
-      return;
-    }
-
-    void refreshSavedSessions();
-  }, [run?.id, run?.status]);
-
-  useEffect(() => {
-    if (!run || run.status !== "running") {
-      return;
-    }
-
-    let cancelled = false;
-    const interval = window.setInterval(async () => {
-      try {
-        const latestRun = await getRun(run.id);
-        if (!cancelled) {
-          setRun(latestRun);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setPageError(error instanceof Error ? error.message : "Polling the run failed.");
-        }
-      }
-    }, 1500);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-    };
-  }, [run]);
-
-  useEffect(() => {
-    if (!run) {
-      setTelemetry(null);
-      setTelemetryError(null);
-      return;
-    }
-
-    const runId = run.id;
-    let cancelled = false;
-
-    async function loadTelemetrySnapshot() {
-      setIsRefreshingTelemetry(true);
-
-      try {
-        const session = await getTelemetrySession(runId);
-        if (!cancelled) {
-          setTelemetry(session);
-          setTelemetryError(null);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setTelemetryError(
-            error instanceof Error ? error.message : "Failed to load telemetry for this session.",
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setIsRefreshingTelemetry(false);
-        }
-      }
-    }
-
-    void loadTelemetrySnapshot();
-
-    if (run.status !== "running") {
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    const interval = window.setInterval(() => {
-      void loadTelemetrySnapshot();
-    }, 1500);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-    };
-  }, [run?.id, run?.status]);
-
-  useEffect(() => {
-    if (!run) {
-      setVariantSummary(null);
-      return;
-    }
-
-    const experimentLabel = run.experimentLabel;
-    let cancelled = false;
-
-    async function loadVariantSummary() {
-      try {
-        const variants = await listTelemetryVariants();
-        const matchingVariant =
-          variants.find((variant) => variant.experimentLabel === experimentLabel) ?? null;
-        if (!cancelled) {
-          setVariantSummary(matchingVariant);
-        }
-      } catch {
-        if (!cancelled) {
-          setVariantSummary(null);
-        }
-      }
-    }
-
-    void loadVariantSummary();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [run?.id, run?.status, run?.experimentLabel]);
-
-  useEffect(() => {
-    if (!selectedLeadId && run?.leads[0]) {
-      const preferredLead =
-        run.leads.find((lead) => lead.score.qualificationState === "qualified") ??
-        run.leads[0];
-      setSelectedLeadId(preferredLead.id);
-    }
-  }, [run, selectedLeadId]);
-
-  async function handleStart(
-    input: StartRunRequest,
-    trace: {
-      correlationId: string;
-      payloadSignature: string;
-    },
-  ) {
-    logWebTrace("TinyFishDemoPage.handleStart", {
-      correlationId: trace.correlationId,
-      invocationKey: trace.correlationId,
-      details: {
-        payloadSignature: trace.payloadSignature,
-        experimentLabel: input.experimentLabel,
-      },
-    });
-
-    setIsStarting(true);
-    setPageError(null);
-    setTelemetryError(null);
-    setSelectedLeadId(null);
-    setTelemetry(null);
-    setVariantSummary(null);
-
-    try {
-      const runId = await startRun(input, trace);
-      logWebTrace("TinyFishDemoPage.handleStart.runAccepted", {
-        correlationId: trace.correlationId,
-        runId,
-        invocationKey: trace.correlationId,
-      });
-      const freshRun = await getRun(runId);
-      setRun(freshRun);
-    } catch (error) {
-      setPageError(error instanceof Error ? error.message : "Failed to start the TinyFish run.");
-    } finally {
-      setIsStarting(false);
-    }
-  }
-
-  async function handlePush() {
-    if (!run) {
-      return;
-    }
-
-    setIsPushing(true);
-    setPageError(null);
-
-    try {
-      const leadIds = run.leads
-        .filter((lead) => lead.score.qualificationState === "qualified")
-        .map((lead) => lead.id);
-      const updatedRun = await pushQualifiedLeads(run.id, leadIds);
-      setRun(updatedRun);
-      const status = await getRevonStatus();
-      setRevonStatus(status);
-    } catch (error) {
-      setPageError(error instanceof Error ? error.message : "Failed to push leads to Revon.");
-    } finally {
-      setIsPushing(false);
-    }
-  }
-
-  const selectedLead = run?.leads.find((lead) => lead.id === selectedLeadId) ?? null;
-
   return (
     <main className="page-shell">
-      <section className="hero">
+      <section className="hero landing-hero">
         <div>
-          <p className="eyebrow">Revon x TinyFish</p>
-          <h1>Autonomous lead acquisition, shown as a real web-agent workflow.</h1>
+          <p className="eyebrow">Revon × TinyFish</p>
+          <h1>Autonomous outbound prospect sourcing powered by TinyFish web agents</h1>
+          <p className="hero-copy landing-copy">
+            Replace manual SDR research with an agent workflow that navigates live websites,
+            evaluates company fit, extracts contact signals, and delivers CRM-ready shortlists.
+          </p>
+          <div className="button-row landing-actions">
+            <button className="primary-button" onClick={navigateToConsoleRuns} type="button">
+              Launch sourcing workflow
+            </button>
+            <button className="secondary-button" onClick={navigateToConsoleSessions} type="button">
+              View workflow history
+            </button>
+          </div>
         </div>
-        <p className="hero-copy">
-          The demo keeps the reviewable surface small: frontend, orchestration, TinyFish
-          integration, and a narrow Revon adapter. The agent still does live multi-step work on
-          websites and returns ranked, evidence-backed leads.
-        </p>
+
+        <section className="panel landing-panel">
+          <div className="panel-header compact">
+            <p className="eyebrow">What the workflow does</p>
+            <h2>Automated prospect sourcing</h2>
+          </div>
+          <ul className="stack-list compact-list">
+            <li>Navigates live company directories and public websites autonomously</li>
+            <li>Evaluates each prospect against your ICP criteria and scores fit</li>
+            <li>Extracts contact signals, decision-maker roles, and qualification evidence</li>
+            <li>Delivers a ranked, CRM-ready shortlist with one-click Revon sync</li>
+          </ul>
+        </section>
       </section>
 
-      {pageError ? <p className="inline-error page-error">{pageError}</p> : null}
+      <div className="persona-strip">
+        <span className="persona-strip-label">Built for</span>
+        <div className="persona-chips">
+          {(["SDR teams", "RevOps teams", "Lead generation agencies", "Founders doing outbound"] as const).map((p) => (
+            <span className="persona-chip" key={p}>{p}</span>
+          ))}
+        </div>
+      </div>
 
-      <section className="top-grid">
-        <IcpForm isSubmitting={isStarting} onSubmit={handleStart} />
-        <div className="trace-column">
-          <RunTimeline run={run} />
-          <TelemetryPanel
-            error={telemetryError}
-            isRefreshing={isRefreshingTelemetry}
-            run={run}
-            telemetry={telemetry}
-            variantSummary={variantSummary}
-          />
+      <section className="why-matters">
+        <article>
+          <h4>The SDR research bottleneck</h4>
+          <p>
+            Building a targeted prospect list means browsing directories, inspecting company
+            websites, assessing ICP fit, finding contacts, and copying everything into a
+            spreadsheet — then the CRM. It takes hours per campaign. The output is inconsistent.
+          </p>
+        </article>
+        <article>
+          <h4>Why a database cannot solve this</h4>
+          <p>
+            Static data providers go stale within weeks. ICP signals — team size signals,
+            service fit, hiring intent, decision-maker presence — live on real websites
+            that require live browsing to read. This workflow cannot be replaced by a
+            database query or a simple RAG application.
+          </p>
+        </article>
+        <article>
+          <h4>The business case</h4>
+          <p>
+            Faster list building, consistent ICP scoring, and a reviewable evidence trail for
+            every prospect. Qualified shortlists go directly into Revon for sequencing —
+            no manual CRM handoff. SDR hours shift from research to conversations.
+          </p>
+        </article>
+      </section>
+
+      <section className="tf-rationale">
+        <div className="tf-rationale-header">
+          <p className="eyebrow">Why TinyFish</p>
+          <h3>This workflow depends on real browser automation</h3>
+          <p className="tf-rationale-sub">LLMs can qualify and reason. They cannot navigate. TinyFish bridges that gap.</p>
+        </div>
+        <div className="tf-rationale-grid">
+          <div className="tf-rationale-card">
+            <strong>Live websites, not cached snapshots</strong>
+            <p>Company fit signals update continuously. Hiring pages, service descriptions, and team bios change weekly. Only a live browser sees current state.</p>
+          </div>
+          <div className="tf-rationale-card">
+            <strong>Dynamic page interaction required</strong>
+            <p>Reaching the right content requires scrolling, clicking through navigation, and waiting for page loads — interactions a static API call cannot perform.</p>
+          </div>
+          <div className="tf-rationale-card">
+            <strong>Stateful multi-step browsing</strong>
+            <p>Directory discovery, site inspection, and contact extraction span multiple coordinated agent runs with shared state — not a single HTTP request.</p>
+          </div>
+          <div className="tf-rationale-card">
+            <strong>Practical inside business software</strong>
+            <p>TinyFish makes autonomous web work reliable and observable. Every agent run is tracked, timed, and surfaced in the operator console with a full evidence trail.</p>
+          </div>
         </div>
       </section>
 
-      <section className="top-grid">
+      <section className="top-grid landing-grid">
         <SavedSessionList
-          error={savedSessionError}
-          isLoading={isLoadingSavedSessions}
+          error={error}
+          isLoading={isLoading}
           onOpenSession={onOpenSavedSession}
           sessions={savedSessions}
         />
         <section className="panel">
           <div className="panel-header compact">
-            <p className="eyebrow">Saved results</p>
-            <h2>Persisted discovery library</h2>
+            <p className="eyebrow">Manual workflow replaced</p>
+            <h2>What this automates</h2>
           </div>
-          <p className="muted">
-            Every completed run is now saved automatically. Open any saved session to inspect
-            evidence, export JSON or CSV, and hand selected qualified leads to Revon later.
-          </p>
+          <div className="workflow-compare">
+            <div className="workflow-col-before">
+              <span className="workflow-col-label">Before</span>
+              <ul>
+                <li>Browse company directories by hand</li>
+                <li>Open each website and check fit manually</li>
+                <li>Search LinkedIn for contact clues</li>
+                <li>Assess ICP signals page by page</li>
+                <li>Build a shortlist in a spreadsheet</li>
+                <li>Copy contacts into the CRM</li>
+              </ul>
+            </div>
+            <div className="workflow-arrow">→</div>
+            <div className="workflow-col-after">
+              <span className="workflow-col-label">After</span>
+              <ul>
+                <li>Define ICP once, launch sourcing workflow</li>
+                <li>Agent navigates live websites autonomously</li>
+                <li>Prospects ranked by fit, reachability, and contact quality</li>
+                <li>Review qualified shortlist in seconds</li>
+                <li>Sync to Revon for outbound sequencing</li>
+              </ul>
+            </div>
+          </div>
         </section>
-      </section>
-
-      <section className="bottom-grid">
-        <div className="results-column">
-          <PushToRevonButton
-            isSubmitting={isPushing}
-            onPush={handlePush}
-            revonStatus={revonStatus}
-            run={run}
-          />
-          <LeadTable
-            leads={run?.leads ?? []}
-            onSelect={setSelectedLeadId}
-            selectedLeadId={selectedLeadId}
-          />
-        </div>
-
-        <EvidencePanel lead={selectedLead} />
       </section>
     </main>
   );

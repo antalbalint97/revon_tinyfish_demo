@@ -59,13 +59,13 @@ export function TelemetryPanel({
   return (
     <section className="panel">
       <div className="panel-header compact">
-        <p className="eyebrow">Experiment telemetry</p>
-        <h2>Optimization trace</h2>
+        <p className="eyebrow">Workflow metrics</p>
+        <h2>Sourcing performance</h2>
       </div>
 
       {!run ? (
         <p className="muted">
-          Start a run to capture session telemetry, TinyFish run timings, and experiment metrics.
+          Launch a sourcing workflow to capture performance metrics, agent timings, and sourcing quality data.
         </p>
       ) : (
         <>
@@ -99,11 +99,11 @@ export function TelemetryPanel({
                   <strong>{formatWallTime(telemetry.totalWallClockMs)}</strong>
                 </article>
                 <article>
-                  <span>Qualified leads</span>
+                  <span>Qualified prospects</span>
                   <strong>{telemetry.totalQualifiedLeads}</strong>
                 </article>
                 <article>
-                  <span>Usable leads</span>
+                  <span>Usable prospects</span>
                   <strong>{telemetry.qualityMetrics.usableLeadCount}</strong>
                 </article>
                 <article>
@@ -130,7 +130,7 @@ export function TelemetryPanel({
 
               <div className="telemetry-sections">
                 <section className="telemetry-section">
-                  <h3>Variant benchmark</h3>
+                  <h3>Benchmark comparison</h3>
                   {variantSummary ? (
                     <div className="summary-grid telemetry-grid compact-grid">
                       <article>
@@ -152,15 +152,15 @@ export function TelemetryPanel({
                     </div>
                   ) : (
                     <p className="muted">
-                      No variant aggregate yet. Finish one or more runs with this experiment label to compare them.
+                      No benchmark data yet. Complete one or more workflows with this experiment label to compare them.
                     </p>
                   )}
                 </section>
 
                 <section className="telemetry-section">
-                  <h3>TinyFish runs</h3>
+                  <h3>Agent activity</h3>
                   {telemetry.tinyfishRuns.length === 0 ? (
-                    <p className="muted">TinyFish run telemetry will appear here as the session progresses.</p>
+                    <p className="muted">Agent activity will appear here as the workflow progresses.</p>
                   ) : (
                     <ul className="stack-list compact-list telemetry-run-list">
                       {telemetry.tinyfishRuns.map((tinyfishRun) => (

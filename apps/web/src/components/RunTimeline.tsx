@@ -52,14 +52,15 @@ export function RunTimeline({ run }: RunTimelineProps) {
   return (
     <section className="panel">
       <div className="panel-header compact">
-        <p className="eyebrow">Run status</p>
-        <h2>Agent trace</h2>
+        <p className="eyebrow">Workflow status</p>
+        <h2>Execution trace</h2>
       </div>
 
       {!run ? (
-        <p className="muted">
-          No run yet. Start with an ICP and the demo will stream a live timeline here.
-        </p>
+        <div className="empty-state">
+          <p className="empty-state-title">No active workflow</p>
+          <p>Configure the ICP parameters above and launch a workflow. The agent trace will stream here in real time.</p>
+        </div>
       ) : (
         <>
           <div className="badge-row">
@@ -77,48 +78,32 @@ export function RunTimeline({ run }: RunTimelineProps) {
 
           <div className="summary-grid">
             <article>
-              <span>Companies found</span>
+              <span>Discovered</span>
               <strong>{run.summary.companiesFound}</strong>
             </article>
             <article>
-              <span>Inspections started</span>
-              <strong>{run.summary.inspectionsStarted}</strong>
-            </article>
-            <article>
-              <span>Inspections complete</span>
+              <span>Inspected</span>
               <strong>{run.summary.inspectionsCompleted}</strong>
             </article>
             <article>
-              <span>Inspections partial</span>
-              <strong>{run.summary.inspectionsPartial}</strong>
+              <span>Qualified</span>
+              <strong>{run.summary.qualifiedLeadCount}</strong>
             </article>
             <article>
-              <span>Inspections failed</span>
-              <strong>{run.summary.inspectionsFailed}</strong>
-            </article>
-            <article>
-              <span>Websites visited</span>
-              <strong>{run.summary.websitesVisited}</strong>
-            </article>
-            <article>
-              <span>Website failures</span>
-              <strong>{run.summary.websiteFailures}</strong>
-            </article>
-            <article>
-              <span>Partial leads</span>
-              <strong>{run.summary.partialLeadCount}</strong>
+              <span>Usable</span>
+              <strong>{run.summary.usableLeadCount}</strong>
             </article>
             <article>
               <span>Decision makers</span>
               <strong>{run.summary.decisionMakersFound}</strong>
             </article>
             <article>
-              <span>Qualified leads</span>
-              <strong>{run.summary.qualifiedLeadCount}</strong>
+              <span>Sites visited</span>
+              <strong>{run.summary.websitesVisited}</strong>
             </article>
             <article>
-              <span>Usable leads</span>
-              <strong>{run.summary.usableLeadCount}</strong>
+              <span>Partial</span>
+              <strong>{run.summary.partialLeadCount}</strong>
             </article>
             <article>
               <span>Wall time</span>
@@ -128,13 +113,12 @@ export function RunTimeline({ run }: RunTimelineProps) {
 
           {run.summary.directoryUrl ? (
             <p className="muted">
-              Directory source:{" "}
+              Directory:{" "}
               <a href={run.summary.directoryUrl} rel="noreferrer" target="_blank">
                 {run.summary.directoryUrl}
               </a>
             </p>
           ) : null}
-          <p className="muted">Telemetry endpoint: /api/telemetry/sessions/{run.id}</p>
 
           <ol className="timeline">
             {run.steps.map((step) => (
@@ -150,7 +134,7 @@ export function RunTimeline({ run }: RunTimelineProps) {
 
           {run.notes.length > 0 ? (
             <div className="run-notes">
-              <h3>Run notes</h3>
+              <h3>Workflow notes</h3>
               <ul className="stack-list compact-list">
                 {run.notes.map((note) => (
                   <li key={note}>{note}</li>

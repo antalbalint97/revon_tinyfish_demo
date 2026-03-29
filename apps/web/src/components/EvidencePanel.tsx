@@ -5,23 +5,24 @@ interface EvidencePanelProps {
 }
 
 export function EvidencePanel({ lead }: EvidencePanelProps) {
+  const topEvidence = lead?.evidence[0] ?? null;
+
   return (
     <section className="panel evidence-panel">
       <div className="panel-header compact">
-        <p className="eyebrow">Proof layer</p>
-        <h2>Evidence and contacts</h2>
+        <p className="eyebrow">Evidence</p>
+        <h2>Prospect evidence and contacts</h2>
       </div>
 
       {!lead ? (
-        <p className="muted">Select a lead to inspect the sites TinyFish opened and what it found.</p>
+        <p className="muted">Select a prospect to inspect the sites visited, qualification evidence, and extracted contacts.</p>
       ) : (
         <>
           <div className="evidence-section">
             <h3>{lead.companyName}</h3>
             <p>{lead.summary}</p>
             <p className="muted">
-              Capture mode: {lead.captureMode} | Inspection: {lead.inspectionStatus} | Score
-              confidence: {lead.score.confidence} | Qualification: {lead.score.qualificationState}
+              Capture mode: {lead.captureMode} | Inspection: {lead.inspectionStatus} | Confidence: {lead.score.confidence} | Qualification: {lead.score.qualificationState}
             </p>
             <p className="muted">
               Total {lead.score.totalScore} | Fit {lead.score.fitScore} | Contact {lead.score.contactabilityScore} |
@@ -30,7 +31,7 @@ export function EvidencePanel({ lead }: EvidencePanelProps) {
           </div>
 
           <div className="evidence-section">
-            <h4>Why it ranked here</h4>
+            <h4>Ranking rationale</h4>
             <ul className="stack-list">
               {lead.score.reasons.map((reason) => (
                 <li key={reason}>{reason}</li>
@@ -39,30 +40,34 @@ export function EvidencePanel({ lead }: EvidencePanelProps) {
           </div>
 
           <div className="evidence-section">
-            <h4>Score breakdown</h4>
-            <ul className="stack-list">
-              <li>
-                <strong>Fit</strong> | {lead.score.explanations.fit.score}
-                <p>{lead.score.explanations.fit.summary}</p>
-              </li>
-              <li>
-                <strong>Contactability</strong> | {lead.score.explanations.contactability.score}
-                <p>{lead.score.explanations.contactability.summary}</p>
-              </li>
-              <li>
-                <strong>Quality</strong> | {lead.score.explanations.quality.score}
-                <p>{lead.score.explanations.quality.summary}</p>
-              </li>
-              <li>
-                <strong>Decision-maker</strong> | {lead.score.explanations.decisionMaker.score}
-                <p>{lead.score.explanations.decisionMaker.summary}</p>
-              </li>
-            </ul>
+            <h4>Fit assessment</h4>
+            <div className="score-cards">
+              <div className="score-card">
+                <span className="score-card-label">ICP fit</span>
+                <span className="score-card-value">{lead.score.explanations.fit.score}</span>
+                <span className="score-card-note">{lead.score.explanations.fit.summary}</span>
+              </div>
+              <div className="score-card">
+                <span className="score-card-label">Reachability</span>
+                <span className="score-card-value">{lead.score.explanations.contactability.score}</span>
+                <span className="score-card-note">{lead.score.explanations.contactability.summary}</span>
+              </div>
+              <div className="score-card">
+                <span className="score-card-label">Site quality</span>
+                <span className="score-card-value">{lead.score.explanations.quality.score}</span>
+                <span className="score-card-note">{lead.score.explanations.quality.summary}</span>
+              </div>
+              <div className="score-card">
+                <span className="score-card-label">Decision-maker access</span>
+                <span className="score-card-value">{lead.score.explanations.decisionMaker.score}</span>
+                <span className="score-card-note">{lead.score.explanations.decisionMaker.summary}</span>
+              </div>
+            </div>
           </div>
 
           {lead.qualityNotes.length > 0 ? (
             <div className="evidence-section">
-              <h4>Quality notes</h4>
+              <h4>Review flags</h4>
               <ul className="stack-list">
                 {lead.qualityNotes.map((note) => (
                   <li key={note}>{note}</li>
@@ -71,10 +76,23 @@ export function EvidencePanel({ lead }: EvidencePanelProps) {
             </div>
           ) : null}
 
+          {topEvidence ? (
+            <div className="evidence-section">
+              <h4>Primary signal</h4>
+              <ul className="stack-list">
+                <li>
+                  <strong>{topEvidence.title}</strong>
+                  <p className="muted">{topEvidence.sourceUrl}</p>
+                  <p>{topEvidence.summary}</p>
+                </li>
+              </ul>
+            </div>
+          ) : null}
+
           <div className="evidence-section">
-            <h4>Detected contacts</h4>
+            <h4>Extracted contacts</h4>
             {lead.contacts.length === 0 ? (
-              <p className="muted">No named contacts were extracted from the visible website pages.</p>
+              <p className="muted">No named contacts were extracted from the visited pages.</p>
             ) : (
               <ul className="stack-list">
                 {lead.contacts.map((contact) => (
@@ -89,7 +107,23 @@ export function EvidencePanel({ lead }: EvidencePanelProps) {
           </div>
 
           <div className="evidence-section">
-            <h4>Visited sources</h4>
+            <h4>ICP signal checks</h4>
+            {lead.fieldAssessments.length === 0 ? (
+              <p className="muted">No ICP signal checks were captured for this prospect.</p>
+            ) : (
+              <ul className="stack-list">
+                {lead.fieldAssessments.map((assessment) => (
+                  <li key={`${assessment.field}-${assessment.status}`}>
+                    <strong>{assessment.field}</strong> | {assessment.status} | {assessment.confidence}
+                    {assessment.notes.length > 0 ? <p>{assessment.notes.join(" | ")}</p> : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="evidence-section">
+            <h4>Pages reviewed</h4>
             <ul className="stack-list">
               {lead.evidence.map((item) => (
                 <li key={item.id}>
@@ -106,6 +140,11 @@ export function EvidencePanel({ lead }: EvidencePanelProps) {
                 </li>
               ))}
             </ul>
+          </div>
+
+          <div className="evidence-section">
+            <h4>Raw data</h4>
+            <pre className="raw-block">{JSON.stringify(lead.rawExtraction, null, 2)}</pre>
           </div>
         </>
       )}

@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import type {
   ExperimentVariantSummary,
   PersistedSessionDetail,
+  PersistedSessionPushResponse,
   RevonAdapterStatus,
 } from "@revon-tinyfish/contracts";
+import { ConsoleLayout } from "../components/ConsoleLayout";
 import { EvidencePanel } from "../components/EvidencePanel";
 import { ExportPanel } from "../components/ExportPanel";
-import { LeadTable } from "../components/LeadTable";
 import { PushToRevonButton } from "../components/PushToRevonButton";
-import { RunTimeline } from "../components/RunTimeline";
+import { SessionLeadTable } from "../components/SessionLeadTable";
 import { TelemetryPanel } from "../components/TelemetryPanel";
 import {
   downloadSavedSessionCsvExport,
@@ -35,6 +36,28 @@ function downloadFile(filename: string, content: string, mimeType: string): void
   URL.revokeObjectURL(url);
 }
 
+function formatDateTime(value: string | null): string {
+  if (!value) {
+    return "—";
+  }
+
+  return new Date(value).toLocaleString();
+}
+
+function sessionRevonStatusLabel(session: PersistedSessionDetail): string {
+  if (session.importStatus === "running") {
+    return "Pending push";
+  }
+  if (session.importStatus === "error") {
+    return "Push failed";
+  }
+  if (session.importStatus === "completed") {
+    return session.importDryRun ? "Dry run" : "Pushed to Revon";
+  }
+
+  return "Not attempted";
+}
+
 export function SavedSessionDetailPage({ sessionId, onBack }: SavedSessionDetailPageProps) {
   const [session, setSession] = useState<PersistedSessionDetail | null>(null);
   const [revonStatus, setRevonStatus] = useState<RevonAdapterStatus | null>(null);
@@ -46,6 +69,9 @@ export function SavedSessionDetailPage({ sessionId, onBack }: SavedSessionDetail
   const [isPushing, setIsPushing] = useState(false);
   const [isExportingJson, setIsExportingJson] = useState(false);
   const [isExportingCsv, setIsExportingCsv] = useState(false);
+  const [includeTelemetry, setIncludeTelemetry] = useState(true);
+  const [pushSummary, setPushSummary] = useState<PersistedSessionPushResponse["summary"] | null>(null);
+  const [exportSuccess, setExportSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -109,11 +135,15 @@ export function SavedSessionDetailPage({ sessionId, onBack }: SavedSessionDetail
     }
 
     setIsExportingJson(true);
+    setExportSuccess(null);
     setPageError(null);
 
     try {
-      const blob = await downloadSavedSessionJsonExport(session.id, selectedLeadIds);
+      const blob = await downloadSavedSessionJsonExport(session.id, selectedLeadIds, {
+        includeTelemetry,
+      });
       downloadFile(`${session.id}-export.json`, await blob.text(), "application/json");
+      setExportSuccess(`JSON exported — ${selectedLeadIds.length} prospect${selectedLeadIds.length !== 1 ? "s" : ""}`);
     } catch (error) {
       setPageError(error instanceof Error ? error.message : "Failed to export JSON.");
     } finally {
@@ -127,16 +157,26 @@ export function SavedSessionDetailPage({ sessionId, onBack }: SavedSessionDetail
     }
 
     setIsExportingCsv(true);
+    setExportSuccess(null);
     setPageError(null);
 
     try {
       const blob = await downloadSavedSessionCsvExport(session.id, selectedLeadIds);
       downloadFile(`${session.id}-export.csv`, await blob.text(), "text/csv;charset=utf-8");
+      setExportSuccess(`CSV exported — ${selectedLeadIds.length} prospect${selectedLeadIds.length !== 1 ? "s" : ""}`);
     } catch (error) {
       setPageError(error instanceof Error ? error.message : "Failed to export CSV.");
     } finally {
       setIsExportingCsv(false);
     }
+  }
+
+  function handleSelectAllQualified() {
+    if (!session) return;
+    const qualifiedIds = session.leads
+      .filter((l) => l.score.qualificationState === "qualified")
+      .map((l) => l.id);
+    setSelectedLeadIds(qualifiedIds);
   }
 
   async function handlePush() {
@@ -149,6 +189,7 @@ export function SavedSessionDetailPage({ sessionId, onBack }: SavedSessionDetail
 
     try {
       const response = await pushSavedSessionLeads(session.id, selectedLeadIds);
+      setPushSummary(response.summary);
       if (response.session) {
         setSession(response.session);
       }
@@ -165,73 +206,145 @@ export function SavedSessionDetailPage({ sessionId, onBack }: SavedSessionDetail
   const demoRun = session ? toDemoRunFromPersistedSession(session) : null;
 
   return (
-    <main className="page-shell">
-      <section className="hero">
-        <div>
-          <button className="secondary-button inline-back" onClick={onBack} type="button">
-            Back to launcher
-          </button>
-          <p className="eyebrow">Saved session</p>
-          <h1>Review persisted lead discovery results.</h1>
-        </div>
-        <p className="hero-copy">
-          Open a completed discovery session, inspect evidence, export selected leads, and push the
-          reviewable shortlist to Revon.
-        </p>
-      </section>
+    <ConsoleLayout
+      activeNav="sessions"
+      title="Workflow execution detail"
+      subtitle="Review the qualified prospect shortlist, inspect evidence and contacts, export results, and sync selected prospects to Revon."
+      sectionLinks={[
+        { id: "session-leads", label: "Prospects" },
+        { id: "session-exports", label: "Exports" },
+        { id: "session-revon", label: "Revon sync" },
+        { id: "session-telemetry", label: "Telemetry" },
+      ]}
+    >
+      <button className="secondary-button inline-back" onClick={onBack} type="button">
+        Back to workflow history
+      </button>
 
       {pageError ? <p className="inline-error page-error">{pageError}</p> : null}
 
       {isLoading ? (
         <section className="panel">
-          <p className="muted">Loading saved session...</p>
+          <div className="summary-cards">
+            {Array.from({ length: 6 }, (_, i) => (
+              <div className="summary-card" key={i}>
+                <span className="skeleton skeleton-line short" style={{ marginBottom: 8 }} />
+                <span className="skeleton skeleton-line medium" />
+              </div>
+            ))}
+          </div>
+          <div className="panel" style={{ padding: "32px 22px" }}>
+            <span className="skeleton skeleton-line wide" style={{ marginBottom: 12 }} />
+            <span className="skeleton skeleton-line medium" style={{ marginBottom: 8 }} />
+            <span className="skeleton skeleton-line short" />
+          </div>
         </section>
-      ) : (
+      ) : session ? (
         <>
-          <section className="top-grid">
-            <div className="trace-column">
-              <RunTimeline run={demoRun} />
-              <TelemetryPanel
-                error={null}
-                isRefreshing={false}
-                run={demoRun}
-                telemetry={session?.telemetry ?? null}
-                variantSummary={variantSummary}
-              />
-            </div>
-            <div className="trace-column">
-              <ExportPanel
-                isExportingCsv={isExportingCsv}
-                isExportingJson={isExportingJson}
-                onDownloadCsv={() => void handleDownloadCsv()}
-                onDownloadJson={handleDownloadJson}
-                selectedCount={selectedLeadIds.length}
-              />
-              <PushToRevonButton
-                isSubmitting={isPushing}
-                onPush={handlePush}
-                revonStatus={revonStatus}
-                run={demoRun}
-                selectedLeadIds={selectedLeadIds}
-              />
-            </div>
-          </section>
+          {(() => {
+            const qualifiedCount = session.leads.filter(
+              (l) => l.score.qualificationState === "qualified",
+            ).length;
+            return (
+              <div className="summary-cards">
+                <div className="summary-card">
+                  <span className="summary-card-label">Status</span>
+                  <span className="summary-card-value">{session.lifecycleStatus.replace(/_/g, " ")}</span>
+                  <span className="summary-card-sub">{session.mode} · {session.quality}</span>
+                </div>
+                <div className="summary-card">
+                  <span className="summary-card-label">Prospects</span>
+                  <span className="summary-card-value">{session.leadCount}</span>
+                  <span className="summary-card-sub">total found</span>
+                </div>
+                <div className="summary-card">
+                  <span className="summary-card-label">Qualified</span>
+                  <span className="summary-card-value">{qualifiedCount}</span>
+                  <span className="summary-card-sub">
+                    {session.leadCount > 0
+                      ? `${Math.round((qualifiedCount / session.leadCount) * 100)}% of total`
+                      : "none found"}
+                  </span>
+                </div>
+                <div className="summary-card">
+                  <span className="summary-card-label">Selected</span>
+                  <span className="summary-card-value">{selectedLeadIds.length}</span>
+                  <span className="summary-card-sub">for export / sync</span>
+                </div>
+                <div className="summary-card">
+                  <span className="summary-card-label">Revon sync</span>
+                  <span className="summary-card-value" style={{ fontSize: "1rem" }}>
+                    {sessionRevonStatusLabel(session)}
+                  </span>
+                  <span className="summary-card-sub">{session.importDryRun ? "dry-run mode" : "live"}</span>
+                </div>
+                <div className="summary-card">
+                  <span className="summary-card-label">Completed</span>
+                  <span className="summary-card-value" style={{ fontSize: "0.88rem", fontWeight: 500 }}>
+                    {formatDateTime(session.completedAt ?? session.startedAt)}
+                  </span>
+                  <span className="summary-card-sub">{session.experimentLabel}</span>
+                </div>
+              </div>
+            );
+          })()}
 
-          <section className="bottom-grid">
+          <section className="console-grid console-grid-detail">
             <div className="results-column">
-              <LeadTable
-                leads={session?.leads ?? []}
-                onSelect={setSelectedLeadId}
-                onToggleLeadSelection={toggleLeadSelection}
-                selectedLeadId={selectedLeadId}
-                selectedLeadIds={selectedLeadIds}
-              />
+              <div id="session-leads">
+                <SessionLeadTable
+                  leads={session.leads}
+                  onSelect={setSelectedLeadId}
+                  onSelectLeads={setSelectedLeadIds}
+                  onToggleLeadSelection={toggleLeadSelection}
+                  selectedLeadId={selectedLeadId}
+                  selectedLeadIds={selectedLeadIds}
+                />
+              </div>
+
+              <div id="session-exports">
+                <ExportPanel
+                  exportSuccess={exportSuccess}
+                  includeTelemetry={includeTelemetry}
+                  isExportingCsv={isExportingCsv}
+                  isExportingJson={isExportingJson}
+                  onDownloadCsv={() => void handleDownloadCsv()}
+                  onDownloadJson={handleDownloadJson}
+                  onToggleIncludeTelemetry={setIncludeTelemetry}
+                  selectedCount={selectedLeadIds.length}
+                />
+              </div>
+
+              <div id="session-revon">
+                <PushToRevonButton
+                  isSubmitting={isPushing}
+                  onPush={handlePush}
+                  revonStatus={revonStatus}
+                  run={demoRun}
+                  selectedLeadIds={selectedLeadIds}
+                  summary={pushSummary ?? undefined}
+                />
+              </div>
+
+              {includeTelemetry && session.telemetry ? (
+                <div id="session-telemetry">
+                  <TelemetryPanel
+                    error={null}
+                    isRefreshing={false}
+                    run={demoRun}
+                    telemetry={session.telemetry}
+                    variantSummary={variantSummary}
+                  />
+                </div>
+              ) : null}
             </div>
 
-            <EvidencePanel lead={selectedLead} />
+            <aside className="drawer-column">
+              <EvidencePanel lead={selectedLead} />
+            </aside>
           </section>
         </>
-      )}
-    </main>
+      ) : null}
+    </ConsoleLayout>
   );
 }

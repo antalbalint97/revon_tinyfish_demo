@@ -6,6 +6,16 @@ interface PushToRevonButtonProps {
   isSubmitting: boolean;
   onPush: () => Promise<void>;
   selectedLeadIds?: string[] | undefined;
+  summary?:
+    | {
+        attempted: number;
+        succeeded: number;
+        failed: number;
+        dryRun: boolean;
+        requestId: string | null;
+        message: string | null;
+      }
+    | undefined;
 }
 
 export function PushToRevonButton({
@@ -14,6 +24,7 @@ export function PushToRevonButton({
   isSubmitting,
   onPush,
   selectedLeadIds,
+  summary,
 }: PushToRevonButtonProps) {
   const selectedLeadIdSet = selectedLeadIds ? new Set(selectedLeadIds) : null;
   const qualifiedCount =
@@ -27,18 +38,18 @@ export function PushToRevonButton({
   return (
     <section className="panel panel-push">
       <div className="panel-header compact">
-        <p className="eyebrow">Revon handoff</p>
-        <h2>Push qualified leads</h2>
+        <p className="eyebrow">Revon sync</p>
+        <h2>Sync shortlist for outbound sequencing</h2>
       </div>
 
       <p className="muted">
-        Destination: {revonStatus?.destination ?? "loading..."}
+        Push qualified prospects into Revon to queue them for outbound sequencing. Destination: {revonStatus?.destination ?? "loading..."}
         {revonStatus?.dryRun ? " (dry-run mode)" : ""}
       </p>
 
       {run?.status === "partial" ? (
         <p className="muted">
-          This run completed with degradation. Push is still allowed for reviewable qualified leads.
+          This workflow completed with degraded output. Sync is available for reviewable qualified prospects.
         </p>
       ) : null}
 
@@ -48,15 +59,28 @@ export function PushToRevonButton({
         onClick={() => void onPush()}
         type="button"
       >
-        {isSubmitting ? "Pushing..." : `Push ${qualifiedCount} selected qualified lead(s) to Revon`}
+        {isSubmitting ? "Syncing..." : `Sync ${qualifiedCount} prospect${qualifiedCount !== 1 ? "s" : ""} to Revon`}
       </button>
 
       {run?.push.message ? <p className="success-note">{run.push.message}</p> : null}
       {run?.push.status === "completed" ? (
         <p className="muted">
-          Push mode: {run.push.dryRun ? "dry-run" : "live"} | Companies: {run.push.pushedCompanyCount}
-          {" | "}Contacts: {run.push.pushedContactCount}
+          {run.push.pushedCompanyCount} prospect{run.push.pushedCompanyCount !== 1 ? "s" : ""} queued for outreach
+          {" | "}{run.push.pushedContactCount} contact{run.push.pushedContactCount !== 1 ? "s" : ""}
+          {" | "}{run.push.dryRun ? "dry-run" : "live sync"}
         </p>
+      ) : null}
+      {summary ? (
+        <ul className="stack-list compact-list">
+          <li>
+            Attempted {summary.attempted} | Succeeded {summary.succeeded} | Failed {summary.failed}
+          </li>
+          <li>
+            {summary.dryRun ? "Dry-run mode" : "Live sync"}
+            {summary.requestId ? ` | request ${summary.requestId}` : ""}
+            {summary.message ? ` | ${summary.message}` : ""}
+          </li>
+        </ul>
       ) : null}
       {run?.push.error ? <p className="inline-error">{run.push.error}</p> : null}
     </section>

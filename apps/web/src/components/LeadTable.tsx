@@ -19,12 +19,13 @@ export function LeadTable({
     return (
       <section className="panel">
         <div className="panel-header compact">
-          <p className="eyebrow">Ranked output</p>
-          <h2>Lead shortlist</h2>
+          <p className="eyebrow">Prospects</p>
+          <h2>Qualified prospect shortlist</h2>
         </div>
-        <p className="muted">
-          Results will appear here incrementally as TinyFish inspection jobs complete and Revon reranks the shortlist.
-        </p>
+        <div className="empty-state">
+          <p className="empty-state-title">Waiting for results</p>
+          <p>Prospects appear here as the workflow completes each inspection and ranks the shortlist.</p>
+        </div>
       </section>
     );
   }
@@ -32,8 +33,8 @@ export function LeadTable({
   return (
     <section className="panel">
       <div className="panel-header compact">
-        <p className="eyebrow">Ranked output</p>
-        <h2>Lead shortlist</h2>
+        <p className="eyebrow">Prospects</p>
+        <h2>Qualified prospect shortlist</h2>
       </div>
 
       <div className="lead-list">
@@ -75,9 +76,24 @@ export function LeadTable({
               <div className="meta-row">
                 <span>{lead.captureMode === "live" ? "live" : "mock"}</span>
                 <span>{lead.inspectionStatus}</span>
-                <span>{lead.score.qualificationState}</span>
-                <span>{lead.score.confidence} confidence</span>
-                {lead.revonStatusLabel ? <span>{lead.revonStatusLabel}</span> : null}
+                <span
+                  className={`qual-badge ${
+                    lead.score.qualificationState === "qualified"
+                      ? "qual-qualified"
+                      : lead.score.qualificationState === "review"
+                        ? "qual-review"
+                        : "qual-unqualified"
+                  }`}
+                >
+                  {lead.score.qualificationState === "qualified"
+                    ? "Qualified"
+                    : lead.score.qualificationState === "review"
+                      ? "Review"
+                      : "Not qualified"}
+                </span>
+                <span className={`confidence-pill confidence-${lead.score.confidence}`}>
+                  {lead.score.confidence}
+                </span>
               </div>
 
               <div className="score-row">

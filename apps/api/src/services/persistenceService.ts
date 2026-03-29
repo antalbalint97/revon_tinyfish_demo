@@ -590,7 +590,10 @@ export async function getPersistedSession(sessionId: string): Promise<PersistedS
           revon_last_attempted_at,
           revon_last_succeeded_at,
           revon_last_request_id,
-          revon_last_error
+          revon_last_error,
+          operator_qualification_state,
+          operator_override_reason,
+          operator_override_updated_at
         FROM discovery_leads
         WHERE session_id = ?
         ORDER BY rank_order ASC

@@ -160,6 +160,9 @@ export function SessionLeadTable({
     if (!firstLead) return;
     const sessionId = firstLead.agentContext.agentSessionId;
 
+    // Snapshot for rollback
+    const snapshot = localLeads;
+
     // Optimistic UI update
     setLocalLeads((current) =>
       current.map((l) =>
@@ -174,10 +177,13 @@ export function SessionLeadTable({
     );
 
     try {
-      await updateLeadQualification(sessionId, leadId, { operatorQualificationState: state });
+      const updatedSession = await updateLeadQualification(sessionId, leadId, {
+        operatorQualificationState: state,
+      });
+      setLocalLeads(updatedSession.leads);
     } catch (error) {
       console.error("Failed to update lead qualification:", error);
-      // Revert on error? For now just log.
+      setLocalLeads(snapshot);
     }
   }
 

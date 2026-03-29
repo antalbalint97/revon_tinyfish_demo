@@ -29,6 +29,12 @@ function parseIncludeTelemetryQuery(request: Request): boolean {
   return String(request.query.includeTelemetry ?? "true").toLowerCase() !== "false";
 }
 
+function toSingleString(value: string | string[] | undefined): string | null {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value[0] ?? null;
+  return null;
+}
+
 async function handlePushToRevon(request: Request, response: Response) {
   const sessionId = request.params.sessionId;
   if (!sessionId || Array.isArray(sessionId)) {
@@ -295,7 +301,8 @@ router.post("/:sessionId/push", handlePushToRevon);
 router.post("/:sessionId/push-to-revon", handlePushToRevon);
 
 router.patch("/:sessionId/leads/:leadId/qualification", async (request: Request, response: Response) => {
-  const { sessionId, leadId } = request.params;
+  const sessionId = toSingleString(request.params.sessionId);
+  const leadId = toSingleString(request.params.leadId);
   if (!sessionId || !leadId) {
     response.status(400).json({ error: "Session ID and Lead ID are required." });
     return;

@@ -239,6 +239,10 @@ select {
   gap: 10px;
 }
 
+.justify-center {
+  justify-content: center;
+}
+
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -806,7 +810,123 @@ select {
   font-size: 0.84rem;
 }
 
+.hero-snapshot .summary-cards {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.hero-snapshot {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 250, 242, 0.8));
+  border: 1px solid rgba(49, 38, 26, 0.15);
+  box-shadow: 0 12px 40px rgba(49, 38, 26, 0.08);
+}
+
 /* ─── Landing page modifiers ────────────────────────────────────────── */
+
+.final-cta-section {
+  text-align: center;
+  margin: 64px 0 24px;
+  padding: 48px 24px;
+  background: var(--panel-strong);
+}
+
+.final-cta-section h2 {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  letter-spacing: -0.03em;
+  margin: 0 0 12px;
+}
+
+.cta-supporting-line {
+  font-size: 1rem;
+  color: var(--muted);
+  margin: 0 auto 32px;
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+.product-preview-section {
+  margin: 48px 0;
+}
+
+.preview-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.preview-card {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(49, 38, 26, 0.12);
+}
+
+.preview-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.4);
+  border-bottom: 1px solid rgba(49, 38, 26, 0.08);
+}
+
+.preview-nav-item {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-transform: lowercase;
+}
+
+.preview-nav-item.active {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.preview-body {
+  padding: 32px 24px;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.tf-rationale-header {
+  margin-bottom: 24px;
+}
+
+.tf-rationale-header h3 {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+}
+
+.tf-rationale-sub {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.tf-rationale-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 48px;
+}
+
+.tf-card {
+  padding: 20px;
+}
+
+.tf-card-title {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+
+.tf-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
 
 .landing-hero {
   align-items: start;
@@ -828,29 +948,72 @@ select {
   grid-template-columns: 1fr 1fr;
 }
 
-.why-matters {
+/* ─── Persona trust strip ────────────────────────────────────────────── */
+
+.persona-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 0 auto 48px;
+  padding: 16px 24px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--stroke);
+  box-shadow: var(--shadow);
+  max-width: fit-content;
+}
+
+.persona-strip-label {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.persona-chips {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.persona-chip {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(49, 38, 26, 0.06);
+  font-size: 0.85rem;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.business-value-section {
+  margin-bottom: 48px;
+}
+
+.value-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  margin-bottom: 20px;
 }
 
-.why-matters article {
-  padding: 18px 20px;
-  border-radius: 20px;
-  border: 1px solid var(--stroke);
-  background: var(--panel);
+.value-card {
+  padding: 24px;
 }
 
-.why-matters article h4 {
-  margin: 0 0 8px;
-  font-size: 0.95rem;
+.value-card-title {
+  margin: 0 0 10px;
+  font-size: 1.1rem;
+  color: var(--ink);
 }
 
-.why-matters article p {
+.value-card p {
   margin: 0;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   color: var(--muted);
+  line-height: 1.5;
 }
 
 /* ─── Console shell ──────────────────────────────────────────────────── */
@@ -1092,14 +1255,23 @@ select {
   display: grid;
   grid-template-columns: 1fr 40px 1fr;
   gap: 0;
-  align-items: start;
+  align-items: stretch;
   margin-top: 12px;
+  height: 100%;
+}
+
+.workflow-panel {
+  display: flex;
+  flex-direction: column;
 }
 
 .workflow-col-before,
 .workflow-col-after {
-  border-radius: 8px;
-  padding: 16px 18px;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .workflow-col-before {

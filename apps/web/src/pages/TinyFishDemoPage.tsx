@@ -47,14 +47,13 @@ export function TinyFishDemoPage({ onOpenSavedSession }: TinyFishDemoPageProps) 
       <section className="hero landing-hero">
         <div>
           <p className="eyebrow">Revon × TinyFish</p>
-          <h1>Autonomous outbound prospect sourcing powered by TinyFish web agents</h1>
+          <h1>Autonomous outbound prospect sourcing for modern revenue teams</h1>
           <p className="hero-copy landing-copy">
-            Replace manual SDR research with an agent workflow that navigates live websites,
-            evaluates company fit, extracts contact signals, and delivers CRM-ready shortlists.
+            Replace manual SDR research with a web-agent workflow that navigates live company websites, scores fit, extracts contact signals, and delivers CRM-ready shortlists.
           </p>
           <div className="button-row landing-actions">
             <button className="primary-button" onClick={navigateToConsoleRuns} type="button">
-              Launch sourcing workflow
+              Open operator console
             </button>
             <button className="secondary-button" onClick={navigateToConsoleSessions} type="button">
               View workflow history
@@ -62,22 +61,34 @@ export function TinyFishDemoPage({ onOpenSavedSession }: TinyFishDemoPageProps) 
           </div>
         </div>
 
-        <section className="panel landing-panel">
+        <section className="panel landing-panel hero-snapshot">
           <div className="panel-header compact">
-            <p className="eyebrow">What the workflow does</p>
-            <h2>Automated prospect sourcing</h2>
+            <p className="eyebrow">Live sourcing overview</p>
+            <h2>Active workflow</h2>
           </div>
-          <ul className="stack-list compact-list">
-            <li>Navigates live company directories and public websites autonomously</li>
-            <li>Evaluates each prospect against your ICP criteria and scores fit</li>
-            <li>Extracts contact signals, decision-maker roles, and qualification evidence</li>
-            <li>Delivers a ranked, CRM-ready shortlist with one-click Revon sync</li>
-          </ul>
+          <div className="summary-cards">
+            <div className="summary-card">
+              <span className="summary-card-label">Prospects discovered</span>
+              <span className="summary-card-value">142</span>
+            </div>
+            <div className="summary-card">
+              <span className="summary-card-label">Qualified</span>
+              <span className="summary-card-value" style={{ color: "#2e7750" }}>38</span>
+            </div>
+            <div className="summary-card">
+              <span className="summary-card-label">Evidence captured</span>
+              <span className="summary-card-value">114</span>
+            </div>
+            <div className="summary-card">
+              <span className="summary-card-label">CRM sync ready</span>
+              <span className="summary-card-value">38</span>
+            </div>
+          </div>
         </section>
       </section>
 
       <div className="persona-strip">
-        <span className="persona-strip-label">Built for</span>
+        <span className="persona-strip-label">Built for:</span>
         <div className="persona-chips">
           {(["SDR teams", "RevOps teams", "Lead generation agencies", "Founders doing outbound"] as const).map((p) => (
             <span className="persona-chip" key={p}>{p}</span>
@@ -85,32 +96,27 @@ export function TinyFishDemoPage({ onOpenSavedSession }: TinyFishDemoPageProps) 
         </div>
       </div>
 
-      <section className="why-matters">
-        <article>
-          <h4>The SDR research bottleneck</h4>
-          <p>
-            Building a targeted prospect list means browsing directories, inspecting company
-            websites, assessing ICP fit, finding contacts, and copying everything into a
-            spreadsheet — then the CRM. It takes hours per campaign. The output is inconsistent.
-          </p>
-        </article>
-        <article>
-          <h4>Why a database cannot solve this</h4>
-          <p>
-            Static data providers go stale within weeks. ICP signals — team size signals,
-            service fit, hiring intent, decision-maker presence — live on real websites
-            that require live browsing to read. This workflow cannot be replaced by a
-            database query or a simple RAG application.
-          </p>
-        </article>
-        <article>
-          <h4>The business case</h4>
-          <p>
-            Faster list building, consistent ICP scoring, and a reviewable evidence trail for
-            every prospect. Qualified shortlists go directly into Revon for sequencing —
-            no manual CRM handoff. SDR hours shift from research to conversations.
-          </p>
-        </article>
+      <section className="business-value-section">
+        <div className="value-cards">
+          <div className="summary-card value-card">
+            <h4 className="value-card-title">Faster campaign prep</h4>
+            <p>
+              Replace hours of manual directory browsing and website inspection with an autonomous workflow that builds lists while your team sleeps.
+            </p>
+          </div>
+          <div className="summary-card value-card">
+            <h4 className="value-card-title">Consistent qualification</h4>
+            <p>
+              Every prospect is evaluated against the exact same ICP criteria. Eliminate human error and inconsistent scoring from your pipeline.
+            </p>
+          </div>
+          <div className="summary-card value-card">
+            <h4 className="value-card-title">CRM-ready handoff</h4>
+            <p>
+              Shortlists are delivered with extracted contact signals and full evidence trails, ready to be synced directly into Revon for outbound sequencing.
+            </p>
+          </div>
+        </div>
       </section>
 
       <section className="tf-rationale">
@@ -119,22 +125,22 @@ export function TinyFishDemoPage({ onOpenSavedSession }: TinyFishDemoPageProps) 
           <h3>This workflow depends on real browser automation</h3>
           <p className="tf-rationale-sub">LLMs can qualify and reason. They cannot navigate. TinyFish bridges that gap.</p>
         </div>
-        <div className="tf-rationale-grid">
-          <div className="tf-rationale-card">
-            <strong>Live websites, not cached snapshots</strong>
-            <p>Company fit signals update continuously. Hiring pages, service descriptions, and team bios change weekly. Only a live browser sees current state.</p>
+        <div className="tf-rationale-grid summary-cards">
+          <div className="summary-card tf-card">
+            <strong className="tf-card-title">Live websites, not stale databases</strong>
+            <p>Company fit signals update continuously. Only a live browser sees the current state.</p>
           </div>
-          <div className="tf-rationale-card">
-            <strong>Dynamic page interaction required</strong>
-            <p>Reaching the right content requires scrolling, clicking through navigation, and waiting for page loads — interactions a static API call cannot perform.</p>
+          <div className="summary-card tf-card">
+            <strong className="tf-card-title">Dynamic navigation and interaction</strong>
+            <p>Reaching the right content requires scrolling and clicking—interactions static APIs cannot perform.</p>
           </div>
-          <div className="tf-rationale-card">
-            <strong>Stateful multi-step browsing</strong>
-            <p>Directory discovery, site inspection, and contact extraction span multiple coordinated agent runs with shared state — not a single HTTP request.</p>
+          <div className="summary-card tf-card">
+            <strong className="tf-card-title">Stateful multi-step browsing</strong>
+            <p>Discovery, inspection, and extraction span multiple coordinated runs with shared state.</p>
           </div>
-          <div className="tf-rationale-card">
-            <strong>Practical inside business software</strong>
-            <p>TinyFish makes autonomous web work reliable and observable. Every agent run is tracked, timed, and surfaced in the operator console with a full evidence trail.</p>
+          <div className="summary-card tf-card">
+            <strong className="tf-card-title">Evidence captured inside business workflow</strong>
+            <p>Every agent run is tracked and surfaced in the operator console with a full evidence trail.</p>
           </div>
         </div>
       </section>
@@ -146,36 +152,70 @@ export function TinyFishDemoPage({ onOpenSavedSession }: TinyFishDemoPageProps) 
           onOpenSession={onOpenSavedSession}
           sessions={savedSessions}
         />
-        <section className="panel">
+        <section className="panel workflow-panel">
           <div className="panel-header compact">
-            <p className="eyebrow">Manual workflow replaced</p>
-            <h2>What this automates</h2>
+            <p className="eyebrow">The manual workflow today</p>
+            <h2>What the product automates</h2>
           </div>
           <div className="workflow-compare">
             <div className="workflow-col-before">
-              <span className="workflow-col-label">Before</span>
+              <span className="workflow-col-label">Manual workflow</span>
               <ul>
-                <li>Browse company directories by hand</li>
-                <li>Open each website and check fit manually</li>
-                <li>Search LinkedIn for contact clues</li>
-                <li>Assess ICP signals page by page</li>
-                <li>Build a shortlist in a spreadsheet</li>
-                <li>Copy contacts into the CRM</li>
+                <li>browse directories manually</li>
+                <li>inspect company websites one by one</li>
+                <li>assess ICP fit by hand</li>
+                <li>search for contact clues</li>
+                <li>build a spreadsheet</li>
+                <li>copy into CRM</li>
               </ul>
             </div>
             <div className="workflow-arrow">→</div>
             <div className="workflow-col-after">
-              <span className="workflow-col-label">After</span>
+              <span className="workflow-col-label">Automated workflow</span>
               <ul>
-                <li>Define ICP once, launch sourcing workflow</li>
-                <li>Agent navigates live websites autonomously</li>
-                <li>Prospects ranked by fit, reachability, and contact quality</li>
-                <li>Review qualified shortlist in seconds</li>
-                <li>Sync to Revon for outbound sequencing</li>
+                <li>define ICP once</li>
+                <li>launch sourcing workflow</li>
+                <li>agent navigates sites autonomously</li>
+                <li>prospects ranked by fit and reachability</li>
+                <li>review evidence-backed shortlist</li>
+                <li>sync into Revon</li>
               </ul>
             </div>
           </div>
         </section>
+      </section>
+          <section className="product-preview-section">
+        <div className="panel-header compact preview-header">
+          <p className="eyebrow">Inside the operator console</p>
+          <h2>Manage the full sourcing lifecycle</h2>
+        </div>
+        <div className="preview-card summary-card">
+          <div className="preview-nav">
+            <span className="preview-nav-item">launch workflows</span>
+            <span className="preview-nav-item active">monitor execution trace</span>
+            <span className="preview-nav-item">inspect ranked prospects</span>
+            <span className="preview-nav-item">open evidence drawer</span>
+            <span className="preview-nav-item">export JSON / CSV</span>
+            <span className="preview-nav-item">sync to Revon</span>
+          </div>
+          <div className="preview-body">
+             <div className="skeleton skeleton-line wide" style={{ marginBottom: '12px' }}></div>
+             <div className="skeleton skeleton-line medium" style={{ marginBottom: '12px' }}></div>
+             <div className="skeleton skeleton-line short"></div>
+          </div>
+        </div>
+      </section>
+          <section className="final-cta-section panel">
+        <h2>Launch a sourcing workflow or inspect past executions</h2>
+        <p className="cta-supporting-line">TinyFish powers the live web execution layer inside a real outbound operations workflow.</p>
+        <div className="button-row justify-center">
+          <button className="primary-button" onClick={navigateToConsoleRuns} type="button">
+            Open operator console
+          </button>
+          <button className="secondary-button" onClick={navigateToConsoleSessions} type="button">
+            Browse workflow history
+          </button>
+        </div>
       </section>
     </main>
   );

@@ -7,6 +7,7 @@ import revonRouter from "./routes/revon.js";
 import runsRouter from "./routes/runs.js";
 import sessionsRouter from "./routes/sessions.js";
 import telemetryRouter from "./routes/telemetry.js";
+import zohoRouter from "./routes/zoho.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -91,6 +92,7 @@ export function createApiApp() {
   app.use("/api/runs", runsRouter);
   app.use("/api/sessions", sessionsRouter);
   app.use("/api/revon", revonRouter);
+  app.use("/api/zoho", zohoRouter);
   app.use("/api/telemetry", telemetryRouter);
 
   return {

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type {
   DemoRun,
   ExperimentVariantSummary,
-  RevonAdapterStatus,
+  ZohoAdapterStatus,
   SessionTelemetry,
   StartRunRequest,
 } from "@revon-tinyfish/contracts";
@@ -10,18 +10,19 @@ import { ConsoleLayout } from "../components/ConsoleLayout";
 import { EvidencePanel } from "../components/EvidencePanel";
 import { IcpForm } from "../components/IcpForm";
 import { LeadTable } from "../components/LeadTable";
-import { PushToRevonButton } from "../components/PushToRevonButton";
+import { PushToZohoButton } from "../components/PushToZohoButton";
 import { RunTimeline } from "../components/RunTimeline";
 import { TelemetryPanel } from "../components/TelemetryPanel";
 import { logWebTrace } from "../lib/debugTrace";
 import { getEffectiveQualificationState } from "../lib/leadQualification";
 import {
-  getRevonStatus,
+  getZohoStatus,
   getRun,
   getTelemetrySession,
   listTelemetryVariants,
-  pushQualifiedLeads,
+  pushLeadsToZoho,
   startRun,
+  type ZohoPushSummary,
 } from "../lib/api";
 import {
   clearActiveExecution,
@@ -34,7 +35,8 @@ export function ConsoleRunsPage() {
   const [telemetry, setTelemetry] = useState<SessionTelemetry | null>(null);
   const [variantSummary, setVariantSummary] = useState<ExperimentVariantSummary | null>(null);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
-  const [revonStatus, setRevonStatus] = useState<RevonAdapterStatus | null>(null);
+  const [zohoStatus, setZohoStatus] = useState<ZohoAdapterStatus | null>(null);
+  const [zohoPushSummary, setZohoPushSummary] = useState<ZohoPushSummary | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [isPushing, setIsPushing] = useState(false);
   const [isRefreshingTelemetry, setIsRefreshingTelemetry] = useState(false);
@@ -46,9 +48,9 @@ export function ConsoleRunsPage() {
 
     async function loadStatus() {
       try {
-        const status = await getRevonStatus();
+        const status = await getZohoStatus();
         if (!cancelled) {
-          setRevonStatus(status);
+          setZohoStatus(status);
         }
       } catch (error) {
         if (!cancelled) {
@@ -258,12 +260,12 @@ export function ConsoleRunsPage() {
       const leadIds = run.leads
         .filter((lead) => getEffectiveQualificationState(lead) === "qualified")
         .map((lead) => lead.id);
-      const updatedRun = await pushQualifiedLeads(run.id, leadIds);
-      setRun(updatedRun);
-      const status = await getRevonStatus();
-      setRevonStatus(status);
+      const summary = await pushLeadsToZoho(run.id, leadIds);
+      setZohoPushSummary(summary);
+      const status = await getZohoStatus();
+      setZohoStatus(status);
     } catch (error) {
-      setPageError(error instanceof Error ? error.message : "Failed to sync leads to CRM.");
+      setPageError(error instanceof Error ? error.message : "Failed to sync leads to Zoho CRM.");
     } finally {
       setIsPushing(false);
     }
@@ -278,7 +280,7 @@ export function ConsoleRunsPage() {
       subtitle="Configure ICP parameters, launch an autonomous sourcing workflow, and inspect the qualified prospect shortlist as it forms."
       sectionLinks={[
         { id: "console-runs-leads", label: "Prospects" },
-        { id: "console-runs-revon", label: "CRM sync (disabled)" },
+        { id: "console-runs-zoho", label: "Zoho CRM sync" },
         { id: "console-runs-telemetry", label: "Telemetry" },
       ]}
     >
@@ -311,12 +313,15 @@ export function ConsoleRunsPage() {
 
       <section className="console-grid console-grid-detail">
         <div className="results-column">
-          <div id="console-runs-revon">
-            <PushToRevonButton
+          <div id="console-runs-zoho">
+            <PushToZohoButton
               isSubmitting={isPushing}
               onPush={handlePush}
-              revonStatus={revonStatus}
-              run={run}
+              zohoStatus={zohoStatus}
+              qualifiedCount={
+                run?.leads.filter((l) => getEffectiveQualificationState(l) === "qualified").length ?? 0
+              }
+              summary={zohoPushSummary ?? undefined}
             />
           </div>
           <div id="console-runs-leads">

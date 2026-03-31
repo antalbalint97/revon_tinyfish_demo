@@ -2,22 +2,22 @@ import { useEffect, useState } from "react";
 import type {
   ExperimentVariantSummary,
   PersistedSessionDetail,
-  PersistedSessionPushResponse,
-  RevonAdapterStatus,
+  ZohoAdapterStatus,
 } from "@revon-tinyfish/contracts";
 import { ConsoleLayout } from "../components/ConsoleLayout";
 import { EvidencePanel } from "../components/EvidencePanel";
 import { ExportPanel } from "../components/ExportPanel";
-import { PushToRevonButton } from "../components/PushToRevonButton";
+import { PushToZohoButton } from "../components/PushToZohoButton";
 import { SessionLeadTable } from "../components/SessionLeadTable";
 import { TelemetryPanel } from "../components/TelemetryPanel";
 import {
   downloadSavedSessionCsvExport,
   downloadSavedSessionJsonExport,
-  getRevonStatus,
+  getZohoStatus,
   getSavedSession,
   listTelemetryVariants,
-  pushSavedSessionLeads,
+  pushLeadsToZoho,
+  type ZohoPushSummary,
 } from "../lib/api";
 import { getEffectiveQualificationState } from "../lib/leadQualification";
 import { toDemoRunFromPersistedSession } from "../lib/persistedRun";
@@ -62,7 +62,7 @@ function sessionRevonStatusLabel(session: PersistedSessionDetail): string {
 
 export function SavedSessionDetailPage({ sessionId, onBack }: SavedSessionDetailPageProps) {
   const [session, setSession] = useState<PersistedSessionDetail | null>(null);
-  const [revonStatus, setRevonStatus] = useState<RevonAdapterStatus | null>(null);
+  const [zohoStatus, setZohoStatus] = useState<ZohoAdapterStatus | null>(null);
   const [variantSummary, setVariantSummary] = useState<ExperimentVariantSummary | null>(null);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
@@ -72,9 +72,9 @@ export function SavedSessionDetailPage({ sessionId, onBack }: SavedSessionDetail
   const [isExportingJson, setIsExportingJson] = useState(false);
   const [isExportingCsv, setIsExportingCsv] = useState(false);
   const [includeTelemetry, setIncludeTelemetry] = useState(true);
-  const [pushSummary, setPushSummary] = useState<PersistedSessionPushResponse["summary"] | null>(null);
+  const [pushSummary, setPushSummary] = useState<ZohoPushSummary | null>(null);
   const [exportSuccess, setExportSuccess] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"session-leads" | "session-evidence" | "session-exports" | "session-revon" | "session-telemetry">("session-leads");
+  const [activeTab, setActiveTab] = useState<"session-leads" | "session-evidence" | "session-exports" | "session-zoho" | "session-telemetry">("session-leads");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
@@ -90,7 +90,7 @@ export function SavedSessionDetailPage({ sessionId, onBack }: SavedSessionDetail
       try {
         const [savedSession, status, variants] = await Promise.all([
           getSavedSession(sessionId),
-          getRevonStatus(),
+          getZohoStatus(),
           listTelemetryVariants(),
         ]);
 
@@ -99,7 +99,7 @@ export function SavedSessionDetailPage({ sessionId, onBack }: SavedSessionDetail
         }
 
         setSession(savedSession);
-        setRevonStatus(status);
+        setZohoStatus(status);
         setVariantSummary(
           variants.find((variant) => variant.experimentLabel === savedSession.experimentLabel) ?? null,
         );
@@ -229,15 +229,12 @@ export function SavedSessionDetailPage({ sessionId, onBack }: SavedSessionDetail
     setPageError(null);
 
     try {
-      const response = await pushSavedSessionLeads(session.id, selectedLeadIds);
-      setPushSummary(response.summary);
-      if (response.session) {
-        setSession(response.session);
-      }
-      const status = await getRevonStatus();
-      setRevonStatus(status);
+      const summary = await pushLeadsToZoho(session.id, selectedLeadIds);
+      setPushSummary(summary);
+      const status = await getZohoStatus();
+      setZohoStatus(status);
     } catch (error) {
-      setPageError(error instanceof Error ? error.message : "Failed to sync saved session leads to CRM.");
+      setPageError(error instanceof Error ? error.message : "Failed to sync leads to Zoho CRM.");
     } finally {
       setIsPushing(false);
     }
@@ -250,7 +247,7 @@ export function SavedSessionDetailPage({ sessionId, onBack }: SavedSessionDetail
     { id: "session-leads", label: "Prospects", onClick: () => setActiveTab("session-leads") as void },
     { id: "session-evidence", label: "Evidence", onClick: () => setActiveTab("session-evidence") as void },
     { id: "session-exports", label: "Exports", onClick: () => setActiveTab("session-exports") as void },
-    { id: "session-revon", label: "CRM sync (disabled)", onClick: () => setActiveTab("session-revon") as void },
+    { id: "session-zoho", label: "Zoho CRM sync", onClick: () => setActiveTab("session-zoho") as void },
   ];
 
   if (session?.telemetry) {
@@ -386,13 +383,15 @@ export function SavedSessionDetailPage({ sessionId, onBack }: SavedSessionDetail
                 </div>
               )}
 
-              {activeTab === "session-revon" && (
-                <div id="session-revon">
-                  <PushToRevonButton
+              {activeTab === "session-zoho" && (
+                <div id="session-zoho">
+                  <PushToZohoButton
                     isSubmitting={isPushing}
                     onPush={handlePush}
-                    revonStatus={revonStatus}
-                    run={demoRun}
+                    zohoStatus={zohoStatus}
+                    qualifiedCount={session.leads.filter(
+                      (l) => getEffectiveQualificationState(l) === "qualified",
+                    ).length}
                     selectedLeadIds={selectedLeadIds}
                     summary={pushSummary ?? undefined}
                   />

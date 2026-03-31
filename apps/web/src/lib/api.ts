@@ -6,6 +6,7 @@ import {
   sessionTelemetrySchema,
   telemetryVariantListResponseSchema,
   revonAdapterStatusSchema,
+  zohoAdapterStatusSchema,
   startRunRequestSchema,
   startRunResponseSchema,
   type DemoRun,
@@ -15,6 +16,7 @@ import {
   type PersistedSessionSummary,
   type ExperimentVariantSummary,
   type RevonAdapterStatus,
+  type ZohoAdapterStatus,
   type SessionTelemetry,
   type StartRunRequest,
 } from "@revon-tinyfish/contracts";
@@ -262,6 +264,35 @@ export async function pushQualifiedLeads(runId: string, leadIds?: string[]): Pro
 export async function getRevonStatus(): Promise<RevonAdapterStatus> {
   const data = await request<unknown>("/api/revon/status");
   return revonAdapterStatusSchema.parse(data);
+}
+
+export async function getZohoStatus(): Promise<ZohoAdapterStatus> {
+  const data = await request<unknown>("/api/zoho/status");
+  return zohoAdapterStatusSchema.parse(data);
+}
+
+export interface ZohoPushSummary {
+  attempted: number;
+  pushedCount: number;
+  failedCount: number;
+  dryRun: boolean;
+  destination: string;
+  module: string;
+  message: string | null;
+}
+
+export async function pushLeadsToZoho(
+  sessionId: string,
+  leadIds?: string[],
+): Promise<ZohoPushSummary> {
+  const data = await request<{ summary: ZohoPushSummary }>(
+    `/api/sessions/${sessionId}/push-to-zoho`,
+    {
+      method: "POST",
+      body: JSON.stringify(leadIds !== undefined ? { leadIds } : {}),
+    },
+  );
+  return data.summary;
 }
 
 export async function updateLeadQualification(

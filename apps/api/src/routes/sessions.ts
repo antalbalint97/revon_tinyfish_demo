@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { pushRunRequestSchema, type PersistedLeadRevonState } from "@revon-tinyfish/contracts";
 import { pushQualifiedLeadsToRevon } from "../integrations/revon/client.js";
+import { pushQualifiedLeadsToZoho } from "../integrations/zoho/client.js";
 import { getEffectiveQualificationState } from "../domain/leads/effectiveQualification.js";
 import {
   buildPersistedSessionCsvExport,
@@ -170,6 +171,58 @@ async function handlePushToRevon(request: Request, response: Response) {
   }
 }
 
+async function handlePushToZoho(request: Request, response: Response) {
+  const sessionId = request.params.sessionId;
+  if (!sessionId || Array.isArray(sessionId)) {
+    response.status(400).json({ error: "A valid session id is required." });
+    return;
+  }
+
+  const session = await getPersistedSession(sessionId);
+  if (!session) {
+    response.status(404).json({ error: "Persisted session not found." });
+    return;
+  }
+
+  const parsed = pushRunRequestSchema.safeParse(request.body ?? {});
+  if (!parsed.success) {
+    response.status(400).json({
+      error: "Invalid push payload.",
+      issues: parsed.error.flatten(),
+    });
+    return;
+  }
+
+  const requestedLeadIds = new Set(parsed.data.leadIds ?? session.leads.map((lead) => lead.id));
+  const leadsToPush = session.leads.filter(
+    (lead) => requestedLeadIds.has(lead.id) && getEffectiveQualificationState(lead) === "qualified",
+  );
+
+  if (leadsToPush.length === 0) {
+    response.status(400).json({ error: "No qualified leads were selected for push." });
+    return;
+  }
+
+  try {
+    const result = await pushQualifiedLeadsToZoho(leadsToPush);
+
+    response.json({
+      summary: {
+        attempted: leadsToPush.length,
+        pushedCount: result.pushedCount,
+        failedCount: result.failedCount,
+        dryRun: result.dryRun,
+        destination: result.destination,
+        module: result.module,
+        message: result.message ?? null,
+      },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Zoho push failed.";
+    response.status(500).json({ error: message });
+  }
+}
+
 router.get("/", async (request: Request, response: Response) => {
   const limit = Number.parseInt(String(request.query.limit ?? "25"), 10);
   const cursor =
@@ -299,6 +352,7 @@ router.get("/:sessionId/export", async (request: Request, response: Response) =>
 
 router.post("/:sessionId/push", handlePushToRevon);
 router.post("/:sessionId/push-to-revon", handlePushToRevon);
+router.post("/:sessionId/push-to-zoho", handlePushToZoho);
 
 router.patch("/:sessionId/leads/:leadId/qualification", async (request: Request, response: Response) => {
   const sessionId = toSingleString(request.params.sessionId);

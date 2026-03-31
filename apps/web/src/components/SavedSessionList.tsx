@@ -1,3 +1,4 @@
+import { ExternalLink, Clock, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import type { PersistedSessionSummary } from "@revon-tinyfish/contracts";
 
 interface SavedSessionListProps {
@@ -25,6 +26,19 @@ function lifecycleLabel(status: PersistedSessionSummary["lifecycleStatus"]): str
   return "Created";
 }
 
+function LifecycleIcon({ status }: { status: PersistedSessionSummary["lifecycleStatus"] }) {
+  if (status === "completed" || status === "pushed_complete") {
+    return <CheckCircle size={14} />;
+  }
+  if (status === "failed") {
+    return <AlertCircle size={14} />;
+  }
+  if (status === "running") {
+    return <Loader2 size={14} className="animate-spin" style={{ animation: "spin 1s linear infinite" }} />;
+  }
+  return <Clock size={14} />;
+}
+
 export function SavedSessionList({
   sessions,
   isLoading,
@@ -32,56 +46,64 @@ export function SavedSessionList({
   onOpenSession,
 }: SavedSessionListProps) {
   return (
-    <section className="panel">
+    <section className="panel session-list-panel" data-testid="session-list-panel">
       <div className="panel-header compact">
-        <p className="eyebrow">Recent executions</p>
-        <h2>Workflow history</h2>
+        <p className="eyebrow">Recent Executions</p>
+        <h2>Workflow History</h2>
       </div>
 
       {error ? <p className="inline-error">{error}</p> : null}
 
       {isLoading ? (
-        <div className="stack-list compact-list">
+        <ul className="timeline">
           {Array.from({ length: 3 }, (_, i) => (
-            <div key={i} style={{ padding: "12px 14px" }}>
-              <span className="skeleton skeleton-line medium" style={{ marginBottom: 8 }} />
-              <span className="skeleton skeleton-line short" />
-            </div>
+            <li key={i} style={{ cursor: "default" }}>
+              <div className="timeline-content">
+                <span className="skeleton skeleton-line medium" style={{ marginBottom: 8, display: "block" }} />
+                <span className="skeleton skeleton-line short" style={{ display: "block" }} />
+              </div>
+            </li>
           ))}
-        </div>
+        </ul>
       ) : sessions.length === 0 ? (
         <div className="empty-state">
           <p className="empty-state-title">No executions yet</p>
           <p>Completed workflows will appear here. Launch a sourcing workflow to get started.</p>
         </div>
       ) : (
-        <ul className="stack-list compact-list">
+        <ul className="timeline" data-testid="session-timeline">
           {sessions.map((session) => (
-            <li key={session.id}>
-              <div className="saved-session-top">
-                <div>
-                  <strong>{session.experimentLabel}</strong>
-                  <p className="muted" title={new Date(session.startedAt).toLocaleString()}>
-                    {formatRelativeTime(session.startedAt)}
-                  </p>
+            <li
+              key={session.id}
+              onClick={() => onOpenSession(session.id)}
+              data-testid={`session-item-${session.id}`}
+            >
+              <div className="timeline-content">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                  <strong style={{ fontFamily: "var(--font-mono)", fontSize: "0.875rem" }}>
+                    {session.experimentLabel}
+                  </strong>
+                  <span className={`lifecycle-badge lifecycle-${session.lifecycleStatus}`}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <LifecycleIcon status={session.lifecycleStatus} />
+                      {lifecycleLabel(session.lifecycleStatus)}
+                    </span>
+                  </span>
                 </div>
-                <span className={`lifecycle-badge lifecycle-${session.lifecycleStatus}`}>
-                  {lifecycleLabel(session.lifecycleStatus)}
-                </span>
+                <p style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <Clock size={12} />
+                    {formatRelativeTime(session.startedAt)}
+                  </span>
+                  <span style={{ color: "var(--text-muted)" }}>|</span>
+                  <span>{session.mode}</span>
+                  <span style={{ color: "var(--text-muted)" }}>|</span>
+                  <span style={{ color: "var(--success)" }}>{session.qualifiedLeadCount} qualified</span>
+                  <span style={{ color: "var(--text-muted)" }}>/</span>
+                  <span>{session.leadCount} total</span>
+                </p>
               </div>
-              <div className="meta-row">
-                <span>{session.mode}</span>
-                <span>{session.quality}</span>
-                <span>{session.qualifiedLeadCount} qualified</span>
-                <span>{session.leadCount} total</span>
-              </div>
-              <button
-                className="secondary-button"
-                onClick={() => onOpenSession(session.id)}
-                type="button"
-              >
-                Open execution
-              </button>
+              <ExternalLink size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
             </li>
           ))}
         </ul>

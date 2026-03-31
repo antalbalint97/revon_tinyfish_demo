@@ -1,0 +1,149 @@
+{
+  "theme": "light",
+  "archetype": "Archetype 4: Swiss & High-Contrast",
+  "mood": "Professional, authoritative, transparent, highly functional, autonomous.",
+  "typography": {
+    "font_family": {
+      "headings": "'Cabinet Grotesk', sans-serif",
+      "body": "'IBM Plex Sans', sans-serif",
+      "mono": "'JetBrains Mono', monospace"
+    },
+    "scale": {
+      "h1": "text-5xl sm:text-6xl tracking-tighter font-black",
+      "h2": "text-3xl sm:text-4xl tracking-tight font-bold",
+      "h3": "text-2xl sm:text-3xl tracking-tight font-semibold",
+      "h4": "text-xl font-medium",
+      "body": "text-base leading-relaxed",
+      "small": "text-sm",
+      "overline": "text-xs font-bold uppercase tracking-[0.2em]"
+    }
+  },
+  "colors": {
+    "background": {
+      "default": "#FFFFFF",
+      "muted": "#F4F4F5",
+      "subtle": "#FAFAFA"
+    },
+    "text": {
+      "primary": "#09090B",
+      "secondary": "#71717A",
+      "muted": "#A1A1AA",
+      "inverse": "#FFFFFF"
+    },
+    "brand": {
+      "primary": "#0047FF",
+      "primary_hover": "#003BE0",
+      "accent": "#18181B"
+    },
+    "semantic": {
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "error": "#EF4444",
+      "info": "#3B82F6"
+    },
+    "border": {
+      "default": "#E4E4E7",
+      "focus": "#0047FF"
+    }
+  },
+  "layout_and_spacing": {
+    "landing_page": {
+      "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+      "section_spacing": "py-24 sm:py-32",
+      "grid_mode": "Bento Grid ('Tetris' mode), grid-cols-1 md:grid-cols-12 gap-8"
+    },
+    "operator_console": {
+      "container": "w-full mx-auto flex h-screen overflow-hidden bg-white",
+      "section_spacing": "p-6",
+      "grid_mode": "Control Room grid, grid-cols-1 md:grid-cols-4 gap-4",
+      "sidebar": "w-64 border-r border-zinc-200 bg-zinc-50 flex-shrink-0 h-full overflow-y-auto"
+    },
+    "radius": "rounded-md",
+    "borders": "1px solid #E4E4E7"
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#0047FF] text-white hover:bg-[#003BE0] transition-colors rounded-md px-6 py-2.5 font-medium shadow-sm hover:shadow-md",
+      "secondary": "bg-white text-[#09090B] border border-[#E4E4E7] hover:bg-zinc-50 transition-colors rounded-md px-6 py-2.5 font-medium",
+      "ghost": "bg-transparent text-[#71717A] hover:text-[#09090B] hover:bg-zinc-100 transition-colors rounded-md px-4 py-2"
+    },
+    "cards": {
+      "default": "bg-white border border-[#E4E4E7] rounded-lg p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1",
+      "metric": "bg-white border border-[#E4E4E7] rounded-md p-4 flex flex-col gap-2"
+    },
+    "inputs": {
+      "default": "border border-[#E4E4E7] bg-white rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0047FF] focus:border-transparent transition-all"
+    },
+    "badges": {
+      "fit_a": "bg-green-100 text-green-800 border border-green-200 px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider",
+      "fit_b": "bg-yellow-100 text-yellow-800 border border-yellow-200 px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider",
+      "fit_c": "bg-zinc-100 text-zinc-800 border border-zinc-200 px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider"
+    },
+    "tables": {
+      "container": "w-full border-collapse text-sm text-left whitespace-nowrap",
+      "header": "bg-zinc-50 border-b border-zinc-200 text-zinc-500 font-medium py-3 px-4 uppercase tracking-wider text-xs",
+      "row": "border-b border-zinc-100 hover:bg-zinc-50 transition-colors",
+      "cell": "py-3 px-4 text-zinc-900"
+    },
+    "navigation": {
+      "header": "sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-[#E4E4E7]"
+    }
+  },
+  "micro_interactions": {
+    "hover": "Subtle -translate-y-1 on feature cards, shadow-md elevation.",
+    "active": "Scale down to 0.98 for buttons.",
+    "focus": "2px solid #0047FF ring offset by 2px.",
+    "transitions": "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
+  },
+  "media": {
+    "hero_background": {
+      "url": "https://images.pexels.com/photos/1029622/pexels-photo-1029622.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Clean white abstract architecture with sharp lines, representing precise web agent navigation and structured workflows. Use as a subtle background behind the hero text, with an overlay like bg-white/80 to ensure text legibility.",
+      "category": "hero"
+    },
+    "sponsor_logos": [
+      {
+        "url": "https://images.unsplash.com/photo-1622476536996-e249f9784f6a?crop=entropy&cs=srgb&fm=jpg",
+        "description": "Abstract white and black card, used as a placeholder for integration logos (Salesforce, Hubspot).",
+        "category": "logo"
+      },
+      {
+        "url": "https://images.pexels.com/photos/812262/pexels-photo-812262.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Vintage computer monitor, cropped for logo placement representing CRM integrations.",
+        "category": "logo"
+      }
+    ],
+    "testimonial_avatars": [
+      {
+        "url": "https://images.unsplash.com/photo-1758599543154-76ec1c4257df?crop=entropy&cs=srgb&fm=jpg",
+        "description": "Professional man in tie, representing a Sales Leader or RevOps user.",
+        "category": "avatar"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1629507313712-f21468afdf2e?crop=entropy&cs=srgb&fm=jpg",
+        "description": "Professional woman in black, representing an SDR user.",
+        "category": "avatar"
+      },
+      {
+        "url": "https://images.pexels.com/photos/33871730/pexels-photo-33871730.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Smiling businesswoman, representing an Account Executive.",
+        "category": "avatar"
+      }
+    ]
+  },
+  "icons": {
+    "library": "lucide-react",
+    "style": "Stroke width 2px, sharp and functional."
+  },
+  "instructions_to_main_agent": [
+    "Strictly follow the Archetype 4: Swiss & High-Contrast theme. Color is function. Do not add decorative gradients or soft pastels.",
+    "Landing Page: Use generous spacing (py-24 to py-32). Incorporate the 'Tetris' bento grid for feature cards and value props.",
+    "Operator Console: Use the 'Control Room' layout. The console should be a full-height app (h-screen, overflow-hidden) with a fixed left sidebar (w-64, bg-zinc-50) and a scrollable main content area.",
+    "Typography: Use Cabinet Grotesk for headings and IBM Plex Sans for the body and dashboard data. Import these via Google Fonts/Fontshare in the index.html or App.css.",
+    "Navigation: Landing page header must be sticky with backdrop-blur-xl (bg-white/80).",
+    "Testing: Add data-testid attributes to all interactive elements (buttons, inputs, links, tabs) for testing.",
+    "Micro-animations: Ensure all buttons and cards have explicit hover and transition classes (e.g. hover:-translate-y-1 hover:shadow-lg).",
+    "Do NOT use 'Inter' font anywhere.",
+    "Images: Strictly use the provided URLs in the media section for hero background, avatars, and logos. Do NOT use generic placeholders like via.placeholder.com."
+  ]
+}

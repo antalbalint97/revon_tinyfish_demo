@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { Rocket, Settings2 } from "lucide-react";
 import { icpInputSchema, type IcpInput, type StartRunRequest } from "@revon-tinyfish/contracts";
 import { DEFAULT_DEMO_INPUT, DEMO_PRESETS, type DemoPreset } from "../demoPresets";
 import { buildIcpSignature, createCorrelationId, logWebTrace } from "../lib/debugTrace";
@@ -23,8 +24,8 @@ export function IcpForm({
   isSubmitting,
   showPresets = true,
   operatorMode = false,
-  eyebrow = "Prospect sourcing",
-  title = "New prospect sourcing workflow",
+  eyebrow = "Prospect Sourcing",
+  title = "New Prospect Sourcing Workflow",
   description = "The agent navigates live company websites and public directories, evaluates each prospect against your ICP, and returns a ranked shortlist.",
   onSubmit,
 }: IcpFormProps) {
@@ -85,15 +86,19 @@ export function IcpForm({
   }
 
   return (
-    <section className="panel panel-form">
+    <section className="panel" data-testid="icp-form-panel">
       <div className="panel-header">
         <p className="eyebrow">{eyebrow}</p>
-        <h2>{title}</h2>
-        <p className="muted">{description}</p>
+        <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "1.25rem", marginTop: 8 }}>
+          {title}
+        </h2>
+        <p className="muted" style={{ marginTop: 8, fontSize: "0.875rem", lineHeight: 1.6 }}>
+          {description}
+        </p>
       </div>
 
       {showPresets ? (
-        <div className="preset-row">
+        <div className="preset-row" data-testid="preset-row">
           {DEMO_PRESETS.map((preset) => (
             <button
               className={`preset-button ${
@@ -104,6 +109,7 @@ export function IcpForm({
               key={preset.id}
               onClick={() => applyPreset(preset)}
               type="button"
+              data-testid={`preset-${preset.id}`}
             >
               <strong>{preset.label}</strong>
               <span>{preset.recommended ? `${preset.note} | safest option` : preset.note}</span>
@@ -112,42 +118,63 @@ export function IcpForm({
         </div>
       ) : null}
 
-      <form className="icp-form" onSubmit={handleSubmit}>
+      <form className="icp-form" onSubmit={handleSubmit} data-testid="icp-form">
         {operatorMode ? (
-          <>
-            <label>
-              <span>Execution mode</span>
-              <select value={modeIntent} onChange={(event) => setModeIntent(event.target.value)}>
-                <option value="backend_auto">Auto-select</option>
-                <option value="prefer_live">Prefer live agent</option>
-                <option value="explicit_mock">Review-safe path</option>
-              </select>
-            </label>
+          <div style={{
+            padding: 16,
+            background: "var(--bg-muted)",
+            borderRadius: 10,
+            marginBottom: 8,
+            border: "1px solid var(--border-default)"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <Settings2 size={16} style={{ color: "var(--text-muted)" }} />
+              <span style={{ fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+                Operator Settings
+              </span>
+            </div>
 
-            <label>
-              <span>Output quality</span>
-              <select
-                value={qualityIntent}
-                onChange={(event) => setQualityIntent(event.target.value)}
-              >
-                <option value="accept_degraded">Accept degraded output</option>
-                <option value="healthy_only">Require healthy output</option>
-              </select>
-            </label>
+            <div style={{ display: "grid", gap: 12 }}>
+              <label>
+                <span>Execution Mode</span>
+                <select
+                  value={modeIntent}
+                  onChange={(event) => setModeIntent(event.target.value)}
+                  data-testid="select-mode"
+                >
+                  <option value="backend_auto">Auto-select</option>
+                  <option value="prefer_live">Prefer live agent</option>
+                  <option value="explicit_mock">Review-safe path</option>
+                </select>
+              </label>
 
-            <p className="muted form-note">
+              <label>
+                <span>Output Quality</span>
+                <select
+                  value={qualityIntent}
+                  onChange={(event) => setQualityIntent(event.target.value)}
+                  data-testid="select-quality"
+                >
+                  <option value="accept_degraded">Accept degraded output</option>
+                  <option value="healthy_only">Require healthy output</option>
+                </select>
+              </label>
+            </div>
+
+            <p className="form-note" style={{ marginTop: 12, color: "var(--text-muted)" }}>
               Execution mode and output quality are operator hints. Actual execution path and
               output quality are determined by the backend.
             </p>
-          </>
+          </div>
         ) : null}
 
         <label>
-          <span>Target market</span>
+          <span>Target Market</span>
           <input
             value={form.targetMarket}
             onChange={(event) => updateField("targetMarket", event.target.value)}
             placeholder="e.g. UK digital agencies, B2B SaaS, healthcare providers"
+            data-testid="input-target-market"
           />
         </label>
 
@@ -157,66 +184,79 @@ export function IcpForm({
             value={form.location}
             onChange={(event) => updateField("location", event.target.value)}
             placeholder="e.g. United Kingdom, DACH region, US Northeast"
+            data-testid="input-location"
           />
         </label>
 
         <label>
-          <span>Company size</span>
+          <span>Company Size</span>
           <select
             value={form.companySize}
             onChange={(event) => updateField("companySize", event.target.value as IcpInput["companySize"])}
+            data-testid="select-company-size"
           >
             <option value="any">Any size</option>
-            <option value="1-10">1–10 employees</option>
-            <option value="11-50">11–50 employees</option>
-            <option value="51-200">51–200 employees</option>
-            <option value="201-1000">201–1000 employees</option>
+            <option value="1-10">1-10 employees</option>
+            <option value="11-50">11-50 employees</option>
+            <option value="51-200">51-200 employees</option>
+            <option value="201-1000">201-1000 employees</option>
             <option value="1000+">1000+ employees</option>
           </select>
         </label>
 
         <label>
-          <span>ICP keywords</span>
+          <span>ICP Keywords</span>
           <input
             value={form.keywords}
             onChange={(event) => updateField("keywords", event.target.value)}
             placeholder="e.g. outbound sales, SaaS, hiring, expansion-stage"
+            data-testid="input-keywords"
           />
         </label>
 
         <label>
-          <span>Decision-maker role</span>
+          <span>Decision-Maker Role</span>
           <input
             value={form.decisionMakerRole}
             onChange={(event) => updateField("decisionMakerRole", event.target.value)}
             placeholder="e.g. VP Sales, Marketing Director, CTO"
+            data-testid="input-decision-maker"
           />
         </label>
 
         <label>
-          <span>Max prospects</span>
+          <span>Max Prospects</span>
           <input
             type="number"
             min={1}
             max={8}
             value={form.maxResults}
             onChange={(event) => updateField("maxResults", Number(event.target.value))}
+            data-testid="input-max-prospects"
           />
         </label>
 
         <label>
-          <span>Experiment label</span>
+          <span>Experiment Label</span>
           <input
             value={experimentLabel}
             onChange={(event) => setExperimentLabel(event.target.value)}
             placeholder="e.g. q2_uk_agency_outbound"
+            data-testid="input-experiment-label"
           />
         </label>
 
         {error ? <p className="inline-error">{error}</p> : null}
 
-        <button className="primary-button" disabled={isSubmitting} type="submit">
-          {isSubmitting ? "Launching workflow..." : "Launch prospect sourcing workflow"}
+        <button
+          className="primary-button"
+          disabled={isSubmitting}
+          type="submit"
+          data-testid="submit-workflow-btn"
+          style={{ marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+        >
+          <Rocket size={18} />
+          {isSubmitting ? "Launching workflow..." : "Launch Prospect Sourcing Workflow"}
         </button>
       </form>
     </section>

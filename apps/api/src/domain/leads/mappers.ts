@@ -34,16 +34,23 @@ function isDecisionMakerRole(role: string): boolean {
 
 function buildContacts(inspection: WebsiteInspection): LeadContact[] {
   const emailPool = inspection.emails.map((email) => email.toLowerCase());
+
   const contacts = inspection.team.map((member) => {
-    const firstName = member.name.split(" ")[0]?.toLowerCase() ?? "";
-    const matchedEmail = emailPool.find((email) => firstName && email.includes(firstName)) ?? null;
+    // 1. Use the directly captured per-member email if available
+    let email: string | null = member.email ?? null;
+
+    // 2. Fall back to matching by first name from the shared email pool
+    if (!email) {
+      const firstName = member.name.split(" ")[0]?.toLowerCase() ?? "";
+      email = emailPool.find((e) => firstName && e.includes(firstName)) ?? null;
+    }
 
     return {
       id: randomUUID(),
       name: member.name,
       role: member.role,
-      email: matchedEmail,
-      linkedinUrl: null,
+      email,
+      linkedinUrl: member.linkedinUrl ?? null,
       isDecisionMaker: isDecisionMakerRole(member.role),
     };
   });
@@ -52,17 +59,16 @@ function buildContacts(inspection: WebsiteInspection): LeadContact[] {
     return contacts;
   }
 
-  if (inspection.emails[0]) {
-    return [
-      {
-        id: randomUUID(),
-        name: "General contact",
-        role: "Inbox",
-        email: inspection.emails[0],
-        linkedinUrl: null,
-        isDecisionMaker: false,
-      },
-    ];
+  // No named team members — create one generic contact per unmatched email
+  if (emailPool.length > 0) {
+    return emailPool.map((email) => ({
+      id: randomUUID(),
+      name: "General contact",
+      role: "Inbox",
+      email,
+      linkedinUrl: null,
+      isDecisionMaker: false,
+    }));
   }
 
   return [];

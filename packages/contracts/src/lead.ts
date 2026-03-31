@@ -114,6 +114,8 @@ export const rawWebsitePageFindingSchema = z.object({
 export const rawWebsiteTeamMemberSchema = z.object({
   name: z.string(),
   role: z.string(),
+  email: z.string().email().nullable().default(null),
+  linkedinUrl: z.string().url().nullable().default(null),
 });
 
 export const rawWebsiteExtractionSchema = z.object({

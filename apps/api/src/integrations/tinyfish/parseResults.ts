@@ -370,9 +370,16 @@ export function parseWebsiteInspection(raw: unknown, websiteUrl: string): Websit
             return null;
           }
 
-          return { name, role };
+          const rawEmail = coerceString(teamMember.email ?? teamMember.email_address);
+          const email = rawEmail && /@/.test(rawEmail) ? rawEmail : null;
+          const linkedinUrl = coerceUrl(teamMember.linkedin_url ?? teamMember.linkedinUrl ?? teamMember.linkedin) ?? null;
+
+          return { name, role, email, linkedinUrl };
         })
-        .filter((member): member is { name: string; role: string } => Boolean(member))
+        .filter(
+          (member): member is { name: string; role: string; email: string | null; linkedinUrl: string | null } =>
+            Boolean(member),
+        )
     : [];
 
   const summary = coerceString(objectValue.summary ?? objectValue.company_summary ?? objectValue.description);

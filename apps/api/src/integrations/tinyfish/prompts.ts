@@ -76,36 +76,43 @@ Return ONLY a JSON array. Each item must use these exact keys:
 
 export function buildWebsiteGoal(input: IcpInput): string {
   return `
-Task: inspect this company website and return lean structured extraction for Revon's backend.
+Task: inspect this company website and return structured extraction for outbound sales prospecting.
 
 Search context for later backend scoring:
 - Target market: ${input.targetMarket}
 - Geography: ${input.location}
 - Preferred company size: ${input.companySize}
-- Relevant decision-maker titles to capture when explicitly visible: ${input.decisionMakerRole}
+- Decision-maker titles to prioritise when visible: ${input.decisionMakerRole}
 - Keywords worth preserving when explicitly visible: ${input.keywords || "none"}
 
+Navigation instructions (follow in this order):
+1. Load the homepage. Scan for emails in the footer, header, and visible text.
+2. Look for a contact page link (e.g. "Contact", "Contact us", "Get in touch"). If found, navigate to it and capture any visible email addresses.
+3. Look for a team or about page link. If found, navigate to it and capture team members with their titles, emails, and LinkedIn profile URLs when explicitly visible.
+4. Stop after these pages — do not follow further links.
+
 Rules:
-- Check the homepage first, then contact/about/team pages only when available.
-- Focus on factual extraction from visible pages, not lead qualification.
-- Do not decide whether the company matches the ICP.
-- Do not score, rank, summarize pipeline value, or infer outreach priority.
+- Only include emails and LinkedIn URLs that are explicitly visible on the page — do not guess or construct them.
 - Do not invent team members, titles, or contact details.
-- Only include an email if it is explicitly visible on the site.
+- Focus on factual extraction only; do not score, rank, or qualify the company.
 - If a field is missing, use null or [] and record it in "missing_fields".
-- If something looks likely but is not explicit, do not promote it to fact. Record that field in "uncertain_fields".
-- Prefer a smaller amount of trustworthy information.
+- If something looks likely but is not explicit, record it in "uncertain_fields" instead.
 
 Return ONLY one JSON object with these exact keys:
 {
   "summary": "one sentence company summary or null",
   "services": ["service 1", "service 2"],
   "emails": ["visible-email@company.com"],
-  "contact_page_url": "https://company.com/contact" or null,
-  "about_page_url": "https://company.com/about" or null,
-  "team_page_url": "https://company.com/team" or null,
+  "contact_page_url": "https://company.com/contact or null",
+  "about_page_url": "https://company.com/about or null",
+  "team_page_url": "https://company.com/team or null",
   "team": [
-    { "name": "Full Name", "role": "Explicit visible job title" }
+    {
+      "name": "Full Name",
+      "role": "Explicit visible job title",
+      "email": "name@company.com or null",
+      "linkedin_url": "https://linkedin.com/in/handle or null"
+    }
   ],
   "evidence": [
     {

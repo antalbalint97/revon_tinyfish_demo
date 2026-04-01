@@ -22,7 +22,7 @@ const STEP_BLUEPRINT: Array<{ key: RunStepKey; label: string }> = [
   { key: "visiting_websites", label: "Opening live company websites" },
   { key: "extracting_contacts", label: "Extracting contacts and structured findings" },
   { key: "ranking_leads", label: "Ranking leads for outreach" },
-  { key: "ready_for_revon", label: "Preparing Revon handoff" },
+  { key: "ready_for_revon", label: "Preparing Zoho handoff" },
 ];
 
 function buildSteps(): RunStep[] {

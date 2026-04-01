@@ -3,10 +3,69 @@ interface TokenCache {
   expiresAt: number;
 }
 
+interface ZohoTokenResponse {
+  access_token?: string;
+  expires_in?: number;
+  error?: string;
+  error_description?: string;
+  api_domain?: string;
+}
+
 let tokenCache: TokenCache | null = null;
+let discoveredApiBaseUrl: string | null = null;
+
+function normalizeBaseUrl(value: string): string {
+  return value.replace(/\/$/, "");
+}
+
+function getDataCenterSuffixFromHost(hostname: string): string | null {
+  const match = hostname.toLowerCase().match(/(?:^|\.)zohoapis\.([a-z0-9.-]+)$/);
+  return match?.[1] ?? null;
+}
+
+function getDataCenterSuffix(): string | null {
+  const explicit = process.env.ZOHO_DATA_CENTER?.trim().toLowerCase();
+  if (explicit) {
+    return explicit.replace(/^\./, "");
+  }
+
+  const apiBaseUrl = process.env.ZOHO_API_BASE_URL?.trim();
+  if (apiBaseUrl) {
+    try {
+      const parsed = new URL(apiBaseUrl);
+      return getDataCenterSuffixFromHost(parsed.hostname);
+    } catch {
+      // Ignore malformed URLs here; status and requests will surface the issue later.
+    }
+  }
+
+  const accountsUrl = process.env.ZOHO_ACCOUNTS_URL?.trim();
+  if (accountsUrl) {
+    try {
+      const parsed = new URL(accountsUrl);
+      const host = parsed.hostname.toLowerCase();
+      const match = host.match(/^accounts\.zoho\.([a-z0-9.-]+)$/);
+      return match?.[1] ?? null;
+    } catch {
+      // Ignore malformed URLs here too.
+    }
+  }
+
+  return null;
+}
 
 function getAccountsUrl(): string {
-  return (process.env.ZOHO_ACCOUNTS_URL ?? "https://accounts.zoho.eu").replace(/\/$/, "");
+  const explicit = process.env.ZOHO_ACCOUNTS_URL?.trim();
+  if (explicit) {
+    return normalizeBaseUrl(explicit);
+  }
+
+  const suffix = getDataCenterSuffix();
+  return normalizeBaseUrl(`https://accounts.zoho.${suffix ?? "eu"}`);
+}
+
+export function getDiscoveredZohoApiBaseUrl(): string | null {
+  return discoveredApiBaseUrl;
 }
 
 export async function getZohoAccessToken(): Promise<string> {
@@ -37,24 +96,33 @@ export async function getZohoAccessToken(): Promise<string> {
     body: params.toString(),
   });
 
-  if (!response.ok) {
-    throw new Error(`Zoho token refresh failed with HTTP ${response.status} ${response.statusText}.`);
+  const rawText = await response.text();
+  let data: ZohoTokenResponse;
+
+  try {
+    data = rawText ? (JSON.parse(rawText) as ZohoTokenResponse) : {};
+  } catch {
+    data = {};
   }
 
-  const data = (await response.json()) as {
-    access_token?: string;
-    expires_in?: number;
-    error?: string;
-  };
-
-  if (data.error || !data.access_token) {
-    throw new Error(`Zoho token refresh error: ${data.error ?? "no access_token in response"}.`);
+  if (!response.ok || data.error || !data.access_token) {
+    const errorCode = data.error ?? `HTTP ${response.status} ${response.statusText}`;
+    const errorDescription = data.error_description ? ` ${data.error_description}` : "";
+    const hint =
+      errorCode === "invalid_client_secret"
+        ? " Check that ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET, and ZOHO_REFRESH_TOKEN belong to the same Zoho data center as the configured accounts URL."
+        : "";
+    throw new Error(`Zoho token refresh error: ${errorCode}.${errorDescription}${hint}`);
   }
 
   tokenCache = {
     accessToken: data.access_token,
     expiresAt: now + (data.expires_in ?? 3600) * 1000,
   };
+
+  if (data.api_domain && typeof data.api_domain === "string" && data.api_domain.trim()) {
+    discoveredApiBaseUrl = normalizeBaseUrl(`${data.api_domain.trim()}/crm/v6`);
+  }
 
   return tokenCache.accessToken;
 }

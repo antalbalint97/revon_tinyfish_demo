@@ -7,7 +7,7 @@ import {
 } from "@revon-tinyfish/contracts";
 import { buildIcpSignature, getCorrelationId, logApiTrace } from "../lib/debugTrace.js";
 import { startDiscoveryRun } from "../orchestrators/discoveryRun.js";
-import { pushQualifiedLeadsToRevon } from "../integrations/revon/client.js";
+import { pushQualifiedLeadsToZoho } from "../integrations/zoho/client.js";
 import { persistDiscoveryRun } from "../services/persistenceService.js";
 import { getTelemetrySession } from "../services/telemetryStore.js";
 import { getRun, updatePushState } from "../services/runStore.js";
@@ -164,7 +164,7 @@ router.post("/:runId/push", async (request: Request, response: Response) => {
   }
 
   if (run.status !== "completed" && run.status !== "partial") {
-    response.status(409).json({ error: "Run must be completed or partial before pushing to Revon." });
+    response.status(409).json({ error: "Run must be completed or partial before pushing to Zoho." });
     return;
   }
 
@@ -194,14 +194,14 @@ router.post("/:runId/push", async (request: Request, response: Response) => {
   });
 
   try {
-    const result = await pushQualifiedLeadsToRevon(run.id, leadsToPush);
+    const result = await pushQualifiedLeadsToZoho(leadsToPush);
     const updatedRun = updatePushState(run.id, {
       status: "completed",
       dryRun: result.dryRun,
       destination: result.destination,
-      pushedCompanyCount: result.pushedCompanyCount,
-      pushedContactCount: result.pushedContactCount,
-      requestId: result.requestId ?? null,
+      pushedCompanyCount: leadsToPush.length,
+      pushedContactCount: result.pushedCount,
+      requestId: null,
       message: result.message ?? null,
       pushedAt: new Date().toISOString(),
       error: null,
@@ -211,7 +211,7 @@ router.post("/:runId/push", async (request: Request, response: Response) => {
         await persistDiscoveryRun(updatedRun, getTelemetrySession(updatedRun.id) ?? null);
       } catch (persistError) {
         console.error(
-          `[tinyfish-demo] failed to persist Revon push state for ${updatedRun.id}: ${
+          `[tinyfish-demo] failed to persist Zoho push state for ${updatedRun.id}: ${
             persistError instanceof Error ? persistError.message : "Unknown persistence error."
           }`,
         );
@@ -219,7 +219,7 @@ router.post("/:runId/push", async (request: Request, response: Response) => {
     }
     response.json(updatedRun);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Revon push failed.";
+    const message = error instanceof Error ? error.message : "Zoho push failed.";
     const updatedRun = updatePushState(run.id, {
       status: "error",
       error: message,
@@ -230,7 +230,7 @@ router.post("/:runId/push", async (request: Request, response: Response) => {
         await persistDiscoveryRun(updatedRun, getTelemetrySession(updatedRun.id) ?? null);
       } catch (persistError) {
         console.error(
-          `[tinyfish-demo] failed to persist Revon push error for ${updatedRun.id}: ${
+          `[tinyfish-demo] failed to persist Zoho push error for ${updatedRun.id}: ${
             persistError instanceof Error ? persistError.message : "Unknown persistence error."
           }`,
         );

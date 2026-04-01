@@ -246,7 +246,7 @@ export async function pushSavedSessionLeads(
   sessionId: string,
   leadIds?: string[],
 ): Promise<PersistedSessionPushResponse> {
-  const data = await request<unknown>(`/api/sessions/${sessionId}/push-to-revon`, {
+  const data = await request<unknown>(`/api/sessions/${sessionId}/push-to-zoho`, {
     method: "POST",
     body: JSON.stringify(leadIds !== undefined ? { leadIds } : {}),
   });

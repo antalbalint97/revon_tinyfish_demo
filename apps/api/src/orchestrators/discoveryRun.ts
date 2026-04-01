@@ -487,7 +487,7 @@ async function executeMockRun(
       runId,
       "ready_for_revon",
       "completed",
-      `${projection.qualifiedLeadCount} qualified lead${projection.qualifiedLeadCount === 1 ? "" : "s"} ready for Revon handoff.`,
+      `${projection.qualifiedLeadCount} qualified lead${projection.qualifiedLeadCount === 1 ? "" : "s"} ready for Zoho handoff.`,
     );
   } else {
     quality = "degraded";
@@ -496,7 +496,7 @@ async function executeMockRun(
       runId,
       "ready_for_revon",
       "skipped",
-      "No qualified leads were produced, so Revon handoff is skipped.",
+      "No qualified leads were produced, so Zoho handoff is skipped.",
     );
   }
 
@@ -1045,7 +1045,7 @@ async function executeLiveAsyncRun(
       runId,
       "ready_for_revon",
       quality === "degraded" ? "partial" : "completed",
-      `${finalProjection.qualifiedLeadCount} qualified lead${finalProjection.qualifiedLeadCount === 1 ? "" : "s"} ready for Revon handoff.`,
+      `${finalProjection.qualifiedLeadCount} qualified lead${finalProjection.qualifiedLeadCount === 1 ? "" : "s"} ready for Zoho handoff.`,
     );
   } else {
     quality = "degraded";
@@ -1054,7 +1054,7 @@ async function executeLiveAsyncRun(
       runId,
       "ready_for_revon",
       "skipped",
-      "No qualified leads were produced, so Revon handoff is skipped.",
+      "No qualified leads were produced, so Zoho handoff is skipped.",
     );
   }
 

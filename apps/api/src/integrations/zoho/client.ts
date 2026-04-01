@@ -7,7 +7,7 @@ import {
   type ZohoAdapterStatus,
   type ZohoPushResult,
 } from "@revon-tinyfish/contracts";
-import { getZohoAccessToken, invalidateZohoTokenCache } from "./auth.js";
+import { getDiscoveredZohoApiBaseUrl, getZohoAccessToken, invalidateZohoTokenCache } from "./auth.js";
 import { mapLeadToZohoRecords } from "./mapper.js";
 
 const BATCH_SIZE = 100;
@@ -25,7 +25,11 @@ function getDryRun(): boolean {
 }
 
 function getApiBaseUrl(): string {
-  return (process.env.ZOHO_API_BASE_URL ?? "https://www.zohoapis.eu/crm/v6").replace(/\/$/, "");
+  return (
+    process.env.ZOHO_API_BASE_URL?.trim() ||
+    getDiscoveredZohoApiBaseUrl() ||
+    "https://www.zohoapis.eu/crm/v6"
+  ).replace(/\/$/, "");
 }
 
 function getModule(): string {
@@ -78,13 +82,19 @@ export async function testZohoConnection(): Promise<ZohoConnectionTestResult> {
     },
   });
 
+  const responseText = await response.text();
+
   if (response.status === 401) {
     invalidateZohoTokenCache();
-    throw new Error("Zoho API returned 401 Unauthorized while testing the connection.");
+    throw new Error(
+      `Zoho API returned 401 Unauthorized while testing the connection. ${responseText || ""}`.trim(),
+    );
   }
 
   if (!response.ok) {
-    throw new Error(`Zoho connection test failed with HTTP ${response.status} ${response.statusText}.`);
+    throw new Error(
+      `Zoho connection test failed with HTTP ${response.status} ${response.statusText}.${responseText ? ` ${responseText}` : ""}`,
+    );
   }
 
   return zohoConnectionTestResultSchema.parse({
@@ -112,18 +122,30 @@ async function pushBatch(
     body: JSON.stringify({ data: records }),
   });
 
+  const responseText = await response.text();
+
   if (response.status === 401) {
     invalidateZohoTokenCache();
-    throw new Error("Zoho API returned 401 Unauthorized. Token may have been revoked.");
+    throw new Error(`Zoho API returned 401 Unauthorized. Token may have been revoked. ${responseText || ""}`.trim());
   }
 
   if (!response.ok) {
-    throw new Error(`Zoho CRM API returned HTTP ${response.status} ${response.statusText}.`);
+    throw new Error(
+      `Zoho CRM API returned HTTP ${response.status} ${response.statusText}.${responseText ? ` ${responseText}` : ""}`,
+    );
   }
 
-  const body = (await response.json()) as {
+  let body: {
     data?: Array<{ code: string; status: string }>;
-  };
+  } = {};
+
+  if (responseText) {
+    try {
+      body = JSON.parse(responseText) as typeof body;
+    } catch {
+      throw new Error("Zoho CRM API returned an invalid JSON payload.");
+    }
+  }
 
   let pushedCount = 0;
   let failedCount = 0;

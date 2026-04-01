@@ -141,10 +141,18 @@ export function LeadTable({
                 <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
                   <strong style={{ color: "var(--text-primary)" }}>{lead.score.qualityScore}</strong> Quality
                 </span>
-                <span style={{ display: "flex", alignItems: "center", gap: 4, color: "var(--brand-primary)" }}>
-                  <Users size={14} />
-                  <strong>{lead.contacts.length}</strong> contacts
-                </span>
+                {lead.contacts.length > 0 ? (
+                  <span style={{ display: "flex", alignItems: "center", gap: 4, color: "var(--success)" }}>
+                    <Users size={14} />
+                    <strong>{lead.contacts.length}</strong>
+                    {lead.contacts.some((c) => c.email) ? " w/ email" : " contacts"}
+                  </span>
+                ) : (
+                  <span style={{ display: "flex", alignItems: "center", gap: 4, color: "var(--text-muted)" }}>
+                    <Users size={14} />
+                    no contacts
+                  </span>
+                )}
               </div>
             </button>
           );

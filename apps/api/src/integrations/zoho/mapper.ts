@@ -1,4 +1,5 @@
 import type { LeadRecord } from "@revon-tinyfish/contracts";
+import { rankContactsForPush } from "./contactRanking.js";
 
 export interface ZohoLead {
   Last_Name: string;
@@ -53,7 +54,7 @@ export function mapLeadToZohoRecordsWithSelection(
   const contacts =
     selectedContactIds && selectedContactIds.size > 0
       ? lead.contacts.filter((contact) => selectedContactIds.has(contact.id))
-      : lead.contacts;
+      : rankContactsForPush(lead.contacts).slice(0, 1);
 
   if (contacts.length === 0) {
     return [

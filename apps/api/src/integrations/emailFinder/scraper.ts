@@ -1,39 +1,72 @@
 /**
  * Lightweight fallback email finder.
  *
- * When the tinyfish agent returns no email addresses for a company, this module
- * independently fetches common contact/impressum page candidates and extracts
- * mailto: hrefs and plaintext email addresses from the raw HTML.
+ * When the TinyFish agent returns no email addresses for a company, this module
+ * independently fetches common contact/impressum/team/legal page candidates and
+ * extracts mailto: hrefs and plaintext email addresses from the raw HTML.
  *
- * No headless browser is required — mailto: links and visible email addresses
+ * No headless browser is required - mailto: links and visible email addresses
  * are present in the static HTML of most business sites.
  */
 
 const CONTACT_PATH_CANDIDATES = [
   "/contact",
   "/contact-us",
-  "/contact-me",
   "/contactus",
   "/get-in-touch",
   "/reach-us",
+  "/talk-to-us",
   "/about",
   "/about-us",
+  "/team",
+  "/our-team",
+  "/people",
+  "/leadership",
+  "/founders",
+  "/company",
+  "/privacy",
+  "/privacy-policy",
+  "/legal",
+  "/legal-notice",
   "/impressum",
+  "/imprint",
   "/kontakt",
   "/kapcsolat",
-  "/legal",
+  "/careers",
+  "/jobs",
+];
+
+const PAGE_KEYWORDS = [
+  "contact",
+  "about",
+  "team",
+  "people",
+  "leadership",
+  "founder",
+  "privacy",
+  "legal",
+  "impressum",
+  "imprint",
+  "career",
+  "job",
+  "people",
+  "company",
+  "reach",
+  "talk",
+  "kontakt",
+  "kapcsolat",
 ];
 
 const FETCH_TIMEOUT_MS = 6_000;
-const MAX_PAGES_TO_FETCH = 5;
+const MAX_PAGES_TO_FETCH = 8;
 
 // Matches standard email addresses in text or attribute values.
 const EMAIL_PATTERN = /\b[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}\b/g;
 
 // Common false positives found in HTML/CSS source.
 const FALSE_POSITIVE_PATTERNS = [
-  /@\d+x\b/,           // @2x image descriptors
-  /@media\b/i,         // CSS @media
+  /@\d+x\b/,
+  /@media\b/i,
   /\.(?:png|jpg|jpeg|gif|svg|webp|css|js)@/i,
   /example\.com$/i,
   /yourdomain/i,
@@ -50,10 +83,26 @@ function isLikelyRealEmail(email: string): boolean {
   return !FALSE_POSITIVE_PATTERNS.some((pattern) => pattern.test(email));
 }
 
+function normalizeCandidateUrl(rawUrl: string, baseUrl: string): string | null {
+  const trimmed = rawUrl.trim();
+  if (!trimmed || trimmed.startsWith("#")) {
+    return null;
+  }
+  if (/^(mailto:|tel:|javascript:)/i.test(trimmed)) {
+    return null;
+  }
+
+  try {
+    return new URL(trimmed, baseUrl).toString();
+  } catch {
+    return null;
+  }
+}
+
 function extractEmailsFromHtml(html: string): string[] {
   const found = new Set<string>();
 
-  // 1. mailto: href attributes — most reliable
+  // 1. mailto: href attributes - most reliable
   const mailtoRe = /href=["']mailto:([^"'?\s]+)/gi;
   let match: RegExpExecArray | null;
   while ((match = mailtoRe.exec(html)) !== null) {
@@ -63,7 +112,7 @@ function extractEmailsFromHtml(html: string): string[] {
     }
   }
 
-  // 2. Plaintext email patterns — catches footer / contact page text
+  // 2. Plaintext email patterns - catches footer / contact page text
   const plainMatches = html.match(EMAIL_PATTERN) ?? [];
   for (const raw of plainMatches) {
     const email = raw.toLowerCase().trim();
@@ -73,6 +122,32 @@ function extractEmailsFromHtml(html: string): string[] {
   }
 
   return [...found];
+}
+
+function extractInternalCandidateUrls(html: string, baseUrl: string): string[] {
+  const candidates = new Set<string>();
+  const hrefRe = /href=["']([^"'#]+)["']/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = hrefRe.exec(html)) !== null) {
+    const normalized = normalizeCandidateUrl(match[1] ?? "", baseUrl);
+    if (!normalized) {
+      continue;
+    }
+
+    try {
+      const url = new URL(normalized);
+      const path = `${url.pathname}${url.search}`.toLowerCase();
+      const looksRelevant = PAGE_KEYWORDS.some((keyword) => path.includes(keyword));
+      if (url.origin === new URL(baseUrl).origin && looksRelevant) {
+        candidates.add(url.toString());
+      }
+    } catch {
+      // ignore malformed URLs
+    }
+  }
+
+  return [...candidates];
 }
 
 async function fetchPageHtml(url: string): Promise<string | null> {
@@ -113,47 +188,55 @@ export interface EmailScrapeResult {
 }
 
 /**
- * Finds contact emails for a company website by fetching common contact/impressum
- * page candidates and extracting email addresses from the HTML.
- *
- * Runs up to MAX_PAGES_TO_FETCH pages in parallel with individual timeouts.
- * Returns unique emails sorted by likelihood (mailto: hrefs first, then plaintext).
+ * Finds contact emails for a company website by fetching the homepage, obvious
+ * contact-like pages, and additional pages discovered from homepage links.
  */
 export async function findContactEmails(
   websiteUrl: string,
   knownContactPageUrl?: string | null,
 ): Promise<EmailScrapeResult> {
+  let startUrl: string;
   let baseOrigin: string;
 
   try {
-    baseOrigin = new URL(websiteUrl).origin;
+    const parsed = new URL(websiteUrl);
+    startUrl = parsed.toString();
+    baseOrigin = parsed.origin;
   } catch {
     return { emails: [], pagesChecked: [], pagesWithEmails: [] };
   }
 
   const candidateUrls: string[] = [];
+  const homepageHtml = await fetchPageHtml(startUrl);
 
-  // Known contact page from agent inspection takes priority
+  candidateUrls.push(startUrl);
+
   if (knownContactPageUrl) {
-    candidateUrls.push(knownContactPageUrl);
-  }
-
-  // Common contact page paths
-  for (const path of CONTACT_PATH_CANDIDATES) {
-    const url = `${baseOrigin}${path}`;
-    if (!candidateUrls.includes(url)) {
-      candidateUrls.push(url);
+    const normalized = normalizeCandidateUrl(knownContactPageUrl, startUrl);
+    if (normalized) {
+      candidateUrls.push(normalized);
     }
   }
 
-  const urlsToFetch = candidateUrls.slice(0, MAX_PAGES_TO_FETCH);
+  for (const path of CONTACT_PATH_CANDIDATES) {
+    const normalized = normalizeCandidateUrl(path, baseOrigin);
+    if (normalized) {
+      candidateUrls.push(normalized);
+    }
+  }
 
-  console.log(
-    `[emailFinder] checking ${urlsToFetch.length} pages for ${baseOrigin}`,
-  );
+  if (homepageHtml) {
+    for (const linkedUrl of extractInternalCandidateUrls(homepageHtml, startUrl)) {
+      candidateUrls.push(linkedUrl);
+    }
+  }
+
+  const urlsToFetch = [...new Set(candidateUrls)].slice(0, MAX_PAGES_TO_FETCH);
+
+  console.log(`[emailFinder] checking ${urlsToFetch.length} pages for ${baseOrigin}`);
 
   const htmlResults = await Promise.all(
-    urlsToFetch.map(async (url) => ({ url, html: await fetchPageHtml(url) })),
+    urlsToFetch.map(async (url) => ({ url, html: url === startUrl ? homepageHtml : await fetchPageHtml(url) })),
   );
 
   const allEmails = new Set<string>();

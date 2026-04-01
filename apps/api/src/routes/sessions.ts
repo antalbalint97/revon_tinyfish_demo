@@ -197,6 +197,9 @@ async function handlePushToZoho(request: Request, response: Response) {
   }
 
   const requestedLeadIds = new Set(parsed.data.leadIds ?? session.leads.map((lead) => lead.id));
+  const leadContactSelectionMap = new Map(
+    (parsed.data.leadContactSelections ?? []).map((selection) => [selection.leadId, selection.contactIds]),
+  );
   const leadsToPush = session.leads.filter(
     (lead) => requestedLeadIds.has(lead.id) && getEffectiveQualificationState(lead) === "qualified",
   );

@@ -87,17 +87,14 @@ export const startRunRequestSchema = z.object({
   promptOverride: z.string().trim().max(2000).default(""),
 });
 
+export const pushLeadContactSelectionSchema = z.object({
+  leadId: z.string(),
+  contactIds: z.array(z.string()).max(20),
+});
+
 export const pushRunRequestSchema = z.object({
   leadIds: z.array(z.string()).max(20).optional(),
-  leadContactSelections: z
-    .array(
-      z.object({
-        leadId: z.string(),
-        contactIds: z.array(z.string()).max(20),
-      }),
-    )
-    .max(20)
-    .optional(),
+  leadContactSelections: z.array(pushLeadContactSelectionSchema).max(20).optional(),
 });
 
 export type RunStatus = z.infer<typeof runStatusSchema>;
@@ -112,7 +109,5 @@ export type RunPushState = z.infer<typeof runPushStateSchema>;
 export type DemoRun = z.infer<typeof demoRunSchema>;
 export type StartRunRequest = z.infer<typeof startRunRequestSchema>;
 export type StartRunResponse = z.infer<typeof startRunResponseSchema>;
-export type PushLeadContactSelection = z.infer<
-  typeof pushRunRequestSchema
->["leadContactSelections"] extends Array<infer Selection> ? Selection : never;
+export type PushLeadContactSelection = z.infer<typeof pushLeadContactSelectionSchema>;
 export type PushRunRequest = z.infer<typeof pushRunRequestSchema>;

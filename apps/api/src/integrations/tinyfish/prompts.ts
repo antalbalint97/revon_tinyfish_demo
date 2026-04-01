@@ -51,7 +51,8 @@ ${trimmed}`;
 }
 
 export function buildDirectoryGoal(input: IcpInput, promptOverride = ""): string {
-  return appendOperatorInstructions(`
+  return appendOperatorInstructions(
+    `
 Task: extract up to ${input.maxResults} factual company listings from the current directory page only.
 
 Search context for later backend scoring:
@@ -83,11 +84,14 @@ Return ONLY a JSON array. Each item must use these exact keys:
   "evidence_snippet": "short visible listing text snippet or null",
   "quality_notes": ["note about missing or uncertain data"]
 }
-`.trim(), promptOverride);
+`.trim(),
+    promptOverride,
+  );
 }
 
 export function buildWebsiteGoal(input: IcpInput, promptOverride = ""): string {
-  return appendOperatorInstructions(`
+  return appendOperatorInstructions(
+    `
 Task: inspect this company website and return structured extraction for outbound sales prospecting.
 
 Search context for later backend scoring:
@@ -98,14 +102,14 @@ Search context for later backend scoring:
 - Keywords worth preserving when explicitly visible: ${input.keywords || "none"}
 
 Navigation instructions (follow in this order, all steps are mandatory):
-1. Load the homepage. Scan every visible section — header, footer, hero, sidebar — for email addresses and mailto: links. Capture everything found.
-2. Find and navigate to the contact page. Look for links labelled "Contact", "Contact us", "Get in touch", "Kontakt", "Kapcsolat", "Impressum", "Legal notice", or similar. This step is required — do not skip it. Capture all visible email addresses and phone numbers.
-3. Find and navigate to the team, about, or people page if a link is visible. Capture each named person with their role, direct email (if visible), and LinkedIn profile URL (if visible).
-4. If no contact or team page link is visible, check the footer for any mailto: link or plaintext email address.
-5. Stop after these pages — do not follow further links.
+1. Load the homepage. Scan every visible section - header, footer, hero, sidebar - for email addresses and mailto: links. Capture everything found.
+2. Find and navigate to every obvious contact-like page that is visible in the primary navigation or footer. Prioritize pages labelled "Contact", "Contact us", "Get in touch", "Kontakt", "Kapcsolat", "Impressum", "Legal notice", "Privacy", "Legal", "About", "Team", "People", "Leadership", "Careers", or similar. Capture all visible email addresses and phone numbers on each page.
+3. If a visible link leads to a people, leadership, founder, or team page, inspect it and capture each named person with their role, direct email (if visible), and LinkedIn profile URL (if visible).
+4. If a contact or team page is not visible, inspect the footer and any obvious company/about/legal pages for mailto: links or plaintext email addresses.
+5. Stop after the obvious contact/about/team/legal pages - do not paginate or continue following unrelated links.
 
 Rules:
-- Only include emails and LinkedIn URLs that are explicitly visible on the page — do not guess or construct them.
+- Only include emails and LinkedIn URLs that are explicitly visible on the page - do not guess or construct them.
 - Do not invent team members, titles, or contact details.
 - Focus on factual extraction only; do not score, rank, or qualify the company.
 - If a field is missing, use null or [] and record it in "missing_fields".
@@ -154,5 +158,7 @@ Return ONLY one JSON object with these exact keys:
   "uncertain_fields": ["team page availability"],
   "quality_notes": ["short operational note about limits or ambiguity"]
 }
-`.trim(), promptOverride);
+`.trim(),
+    promptOverride,
+  );
 }

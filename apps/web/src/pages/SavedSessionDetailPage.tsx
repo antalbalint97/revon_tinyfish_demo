@@ -453,9 +453,7 @@ export function SavedSessionDetailPage({ sessionId, onBack }: SavedSessionDetail
                     onTestConnection={handleTestZohoConnection}
                     connectionTest={zohoConnectionTest ?? undefined}
                     zohoStatus={zohoStatus}
-                    qualifiedCount={session.leads.filter(
-                      (l) => getEffectiveQualificationState(l) === "qualified",
-                    ).length}
+                    qualifiedCount={pushableLeads.length}
                     selectedLeadIds={selectedLeadIds}
                     summary={pushSummary ?? undefined}
                   />

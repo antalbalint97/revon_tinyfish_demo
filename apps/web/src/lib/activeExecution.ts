@@ -30,8 +30,8 @@ export function getActiveExecution(): ActiveExecution | null {
 
   return {
     sessionId,
-    executionId,
     startedAt,
+    ...(executionId ? { executionId } : {}),
   };
 }
 

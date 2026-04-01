@@ -36,6 +36,13 @@ function averageNullable(values: Array<number | null>): number | null {
   return average(filtered);
 }
 
+function countPublicEmails(lead: LeadRecord): number {
+  return new Set([
+    ...lead.contacts.map((contact) => contact.email?.toLowerCase() ?? null),
+    ...lead.rawExtraction.website.emails.map((email) => email.toLowerCase()),
+  ].filter((email): email is string => Boolean(email))).size;
+}
+
 function roundMetric(value: number): number {
   return Number(value.toFixed(2));
 }
@@ -60,19 +67,16 @@ function computeSessionMetrics(base: SessionTelemetry, leads: LeadRecord[] = [])
   const decisionMakerLeadCount = leads.filter((lead) =>
     lead.contacts.some((contact) => contact.isDecisionMaker),
   ).length;
-  const publicEmailLeadCount = leads.filter((lead) =>
-    lead.contacts.some((contact) => Boolean(contact.email)),
-  ).length;
+  const publicEmailLeadCount = leads.filter((lead) => countPublicEmails(lead) > 0).length;
   const totalDecisionMakersFound = leads.reduce(
     (total, lead) => total + lead.contacts.filter((contact) => contact.isDecisionMaker).length,
     0,
   );
   const totalPublicEmailsFound = new Set(
-    leads.flatMap((lead) =>
-      lead.contacts
-        .map((contact) => contact.email?.toLowerCase() ?? null)
-        .filter((email): email is string => Boolean(email)),
-    ),
+    leads.flatMap((lead) => [
+      ...lead.contacts.map((contact) => contact.email?.toLowerCase() ?? null),
+      ...lead.rawExtraction.website.emails.map((email) => email.toLowerCase()),
+    ].filter((email): email is string => Boolean(email))),
   ).size;
   const totalCompaniesInspected = inspectionRuns.length;
   const totalCompletedInspections = inspectionRuns.filter(

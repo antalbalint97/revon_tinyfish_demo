@@ -12,6 +12,7 @@ export function TinyFishDemoPage({ onOpenSavedSession }: TinyFishDemoPageProps) 
   const [savedSessions, setSavedSessions] = useState<PersistedSessionSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const latestSession = savedSessions[0] ?? null;
 
   useEffect(() => {
     let cancelled = false;
@@ -89,25 +90,25 @@ export function TinyFishDemoPage({ onOpenSavedSession }: TinyFishDemoPageProps) 
         <section className="panel landing-panel hero-snapshot">
           <div className="panel-header compact">
             <p className="eyebrow">Live sourcing overview</p>
-            <h2>{savedSessions.length > 0 ? "Latest workflow snapshot" : "No workflow executed yet"}</h2>
+            <h2>{latestSession ? "Latest workflow snapshot" : "No workflow executed yet"}</h2>
           </div>
-          {savedSessions.length > 0 ? (
+          {latestSession ? (
             <div className="summary-cards">
               <div className="summary-card">
                 <span className="summary-card-label">Prospects discovered</span>
-                <span className="summary-card-value">{savedSessions[0].leadCount}</span>
+                <span className="summary-card-value">{latestSession.leadCount}</span>
               </div>
               <div className="summary-card">
                 <span className="summary-card-label">Qualified</span>
-                <span className="summary-card-value" style={{ color: "#2e7750" }}>{savedSessions[0].qualifiedLeadCount}</span>
+                <span className="summary-card-value" style={{ color: "#2e7750" }}>{latestSession.qualifiedLeadCount}</span>
               </div>
               <div className="summary-card">
-                <span className="summary-card-label">Evidence captured</span>
-                <span className="summary-card-value">-</span>
+                <span className="summary-card-label">Evidence-backed leads</span>
+                <span className="summary-card-value">{latestSession.usableLeadCount}</span>
               </div>
               <div className="summary-card">
                 <span className="summary-card-label">CRM sync ready</span>
-                <span className="summary-card-value">{savedSessions[0].qualifiedLeadCount}</span>
+                <span className="summary-card-value">{latestSession.qualifiedLeadCount}</span>
               </div>
             </div>
           ) : (

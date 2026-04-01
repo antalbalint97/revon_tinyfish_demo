@@ -189,9 +189,10 @@ function countDecisionMakers(leads: LeadRecord[]): number {
 function countPublicEmails(leads: LeadRecord[]): number {
   return new Set(
     leads.flatMap((lead) =>
-      lead.contacts
-        .map((contact) => contact.email?.toLowerCase() ?? null)
-        .filter((email): email is string => Boolean(email)),
+      [
+        ...lead.contacts.map((contact) => contact.email?.toLowerCase() ?? null),
+        ...lead.rawExtraction.website.emails.map((email) => email.toLowerCase()),
+      ].filter((email): email is string => Boolean(email)),
     ),
   ).size;
 }

@@ -63,6 +63,13 @@ function collectSearchText(lead: ReturnType<typeof normalizeLeadCandidate>): str
     .trim();
 }
 
+function countPublicEmails(lead: ReturnType<typeof normalizeLeadCandidate>): number {
+  return new Set([
+    ...lead.contacts.map((contact) => contact.email?.toLowerCase() ?? null),
+    ...lead.rawExtraction.website.emails.map((email) => email.toLowerCase()),
+  ].filter((email): email is string => Boolean(email))).size;
+}
+
 function buildAgentContext(
   candidate: DirectoryCandidate,
   sessionContext?: LeadProcessingSessionContext,
@@ -114,7 +121,7 @@ export function buildLeadScorerInput(
       keywordTerms: splitKeywords(input.keywords),
       counts: {
         contactCount: lead.contacts.length,
-        publicEmailCount: lead.contacts.filter((contact) => Boolean(contact.email)).length,
+        publicEmailCount: countPublicEmails(lead),
         decisionMakerCount: lead.contacts.filter((contact) => contact.isDecisionMaker).length,
         evidenceCount: lead.evidence.length,
         pageFindingCount: lead.rawExtraction.website.pageFindings.length,

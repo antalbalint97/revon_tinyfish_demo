@@ -13,8 +13,67 @@ function normalize(text: string): string {
   return text.toLowerCase();
 }
 
+function tokenize(text: string): string[] {
+  return normalize(text)
+    .match(/[a-z0-9]+/g)
+    ?.filter((token) => token.length > 2) ?? [];
+}
+
+function expandMatchVariants(term: string): string[] {
+  const normalized = normalize(term).trim();
+  const variants = new Set([normalized]);
+
+  if (normalized.includes("united kingdom") || normalized === "uk") {
+    variants.add("uk");
+    variants.add("united kingdom");
+  }
+
+  if (normalized.includes("united states") || normalized === "us") {
+    variants.add("us");
+    variants.add("united states");
+  }
+
+  if (normalized.includes("dach")) {
+    variants.add("dach");
+    variants.add("germany");
+    variants.add("austria");
+    variants.add("switzerland");
+  }
+
+  return [...variants];
+}
+
 function matches(text: string, term: string): boolean {
-  return normalize(text).includes(normalize(term));
+  const normalizedText = normalize(text);
+  const normalizedTerm = normalize(term).trim();
+
+  if (!normalizedTerm) {
+    return false;
+  }
+
+  if (normalizedText.includes(normalizedTerm) || normalizedTerm.includes(normalizedText)) {
+    return true;
+  }
+
+  for (const variant of expandMatchVariants(normalizedTerm)) {
+    if (variant && normalizedText.includes(variant)) {
+      return true;
+    }
+  }
+
+  const textTokens = new Set(tokenize(text));
+  const termTokens = tokenize(term);
+
+  if (termTokens.length === 0) {
+    return false;
+  }
+
+  const overlap = termTokens.filter((token) => textTokens.has(token)).length;
+  if (termTokens.length === 1) {
+    return overlap >= 1;
+  }
+
+  return overlap >= Math.min(2, termTokens.length) || overlap / termTokens.length >= 0.66;
 }
 
 function clampScore(value: number): number {

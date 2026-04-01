@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { PanelRight, PanelRightClose } from "lucide-react";
 import type {
   ExperimentVariantSummary,
@@ -22,7 +22,6 @@ import {
 } from "../lib/api";
 import { getEffectiveQualificationState } from "../lib/leadQualification";
 import { toDemoRunFromPersistedSession } from "../lib/persistedRun";
-import { getActiveExecution } from "../lib/activeExecution";
 
 interface SavedSessionDetailPageProps {
   sessionId: string;
@@ -133,7 +132,7 @@ export function SavedSessionDetailPage({ sessionId, onBack }: SavedSessionDetail
   }, [sessionId]);
 
   useEffect(() => {
-    const activeStates: Array<typeof session.lifecycleStatus> = ["created", "running"];
+    const activeStates: PersistedSessionDetail["lifecycleStatus"][] = ["created", "running"];
     if (!session || !activeStates.includes(session.lifecycleStatus)) {
       if (session && (session.status === "completed" || session.status === "failed")) {
         console.log(`[SavedSessionDetailPage] Execution ${session.status}, polling stopped`);

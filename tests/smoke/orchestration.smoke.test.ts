@@ -79,6 +79,7 @@ describe("orchestration lifecycle smoke", () => {
   it("marks live async runs as partial and degraded when one website inspection fails", async () => {
     const restoreEnv = applyEnv({
       TINYFISH_API_KEY: "demo-key",
+      TINYFISH_ENABLE_LIVE_CALLS: "true",
       TINYFISH_FORCE_MOCK: "false",
       TINYFISH_ENABLE_MOCK_FALLBACK: "false",
       TINYFISH_INSPECTION_CONCURRENCY: "2",
@@ -148,6 +149,7 @@ describe("orchestration lifecycle smoke", () => {
   it("submits inspection runs with bounded concurrency instead of one-by-one", async () => {
     const restoreEnv = applyEnv({
       TINYFISH_API_KEY: "demo-key",
+      TINYFISH_ENABLE_LIVE_CALLS: "true",
       TINYFISH_FORCE_MOCK: "false",
       TINYFISH_ENABLE_MOCK_FALLBACK: "false",
       TINYFISH_INSPECTION_CONCURRENCY: "2",
@@ -226,6 +228,7 @@ describe("orchestration lifecycle smoke", () => {
   it("degrades into explicit mock fallback when live async directory submission fails", async () => {
     const restoreEnv = applyEnv({
       TINYFISH_API_KEY: "demo-key",
+      TINYFISH_ENABLE_LIVE_CALLS: "true",
       TINYFISH_FORCE_MOCK: "false",
       TINYFISH_ENABLE_MOCK_FALLBACK: "true",
     });

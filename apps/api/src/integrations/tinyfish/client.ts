@@ -5,6 +5,16 @@ const DEFAULT_TINYFISH_ASYNC_URL = "https://agent.tinyfish.ai/v1/automation/run-
 const DEFAULT_TINYFISH_RUNS_BATCH_URL = "https://agent.tinyfish.ai/v1/runs/batch";
 const DEFAULT_TINYFISH_TIMEOUT_MS = 180_000;
 
+function assertTinyFishLiveCallsEnabled(): void {
+  if ((process.env.TINYFISH_ENABLE_LIVE_CALLS ?? "false").toLowerCase() === "true") {
+    return;
+  }
+
+  throw new Error(
+    "TinyFish live calls are disabled in this repo. Set TINYFISH_ENABLE_LIVE_CALLS=true only for explicit local testing.",
+  );
+}
+
 interface TinyFishStreamEvent {
   type: string;
   run_id?: string;
@@ -391,6 +401,7 @@ export async function runTinyFishAutomation({
   timeoutMs = DEFAULT_TINYFISH_TIMEOUT_MS,
   trace,
 }: RunTinyFishAutomationInput): Promise<unknown> {
+  assertTinyFishLiveCallsEnabled();
   const endpoint = process.env.TINYFISH_BASE_URL?.trim() || DEFAULT_TINYFISH_SSE_URL;
   logApiTrace("tinyfish.client.invoke", {
     correlationId: trace?.correlationId,
@@ -436,6 +447,7 @@ export async function startTinyFishAutomationAsync({
   goal,
   trace,
 }: StartTinyFishAutomationAsyncInput): Promise<TinyFishAsyncRunHandle> {
+  assertTinyFishLiveCallsEnabled();
   const endpoint = process.env.TINYFISH_ASYNC_URL?.trim() || DEFAULT_TINYFISH_ASYNC_URL;
   logApiTrace("tinyfish.client.async.submit", {
     correlationId: trace?.correlationId,
@@ -496,6 +508,7 @@ export async function getTinyFishRunsByIds(
     };
   }
 
+  assertTinyFishLiveCallsEnabled();
   const endpoint = process.env.TINYFISH_RUNS_BATCH_URL?.trim() || DEFAULT_TINYFISH_RUNS_BATCH_URL;
   logApiTrace("tinyfish.client.async.poll", {
     correlationId: trace?.correlationId,

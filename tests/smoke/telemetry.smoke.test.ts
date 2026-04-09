@@ -106,6 +106,7 @@ describe("telemetry smoke", () => {
   it("captures session-level and TinyFish run telemetry for a successful live session", async () => {
     const restoreEnv = applyEnv({
       TINYFISH_API_KEY: "demo-key",
+      TINYFISH_ENABLE_LIVE_CALLS: "true",
       TINYFISH_FORCE_MOCK: "false",
       TINYFISH_ENABLE_MOCK_FALLBACK: "false",
       TINYFISH_INSPECTION_CONCURRENCY: "2",
@@ -146,6 +147,7 @@ describe("telemetry smoke", () => {
   it("compares experiment variants across sessions", async () => {
     const restoreEnv = applyEnv({
       TINYFISH_API_KEY: "demo-key",
+      TINYFISH_ENABLE_LIVE_CALLS: "true",
       TINYFISH_FORCE_MOCK: "false",
       TINYFISH_ENABLE_MOCK_FALLBACK: "false",
       TINYFISH_INSPECTION_CONCURRENCY: "2",

@@ -23,12 +23,23 @@ function createSseResponse(chunks: string[], status = 200, statusText = "OK"): R
 }
 
 describe("tinyfish client smoke", () => {
+  const previousLiveCalls = process.env.TINYFISH_ENABLE_LIVE_CALLS;
+
+  afterEach(() => {
+    if (previousLiveCalls === undefined) {
+      delete process.env.TINYFISH_ENABLE_LIVE_CALLS;
+    } else {
+      process.env.TINYFISH_ENABLE_LIVE_CALLS = previousLiveCalls;
+    }
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
   it("returns the final payload from COMPLETE.result and preserves the documented request body", async () => {
+    process.env.TINYFISH_ENABLE_LIVE_CALLS = "true";
     const fetchMock = vi.fn().mockResolvedValue(
       createSseResponse([
         'data: {"type":"STARTED","run_id":"run-123"}\n\n',
@@ -57,6 +68,7 @@ describe("tinyfish client smoke", () => {
   });
 
   it("rejects honestly if the stream ends before a usable COMPLETE event arrives", async () => {
+    process.env.TINYFISH_ENABLE_LIVE_CALLS = "true";
     const fetchMock = vi.fn().mockResolvedValue(
       createSseResponse([
         'data: {"type":"STARTED","run_id":"run-456"}\n\n',

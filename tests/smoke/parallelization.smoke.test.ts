@@ -51,6 +51,7 @@ describe("orchestration parallelization and capping smoke", () => {
   it("respects TINYFISH_MAX_COMPANIES_TO_INSPECT cap", async () => {
     const restoreEnv = applyEnv({
       TINYFISH_API_KEY: "demo-key",
+      TINYFISH_ENABLE_LIVE_CALLS: "true",
       TINYFISH_FORCE_MOCK: "false",
       TINYFISH_ENABLE_MOCK_FALLBACK: "false",
       TINYFISH_MAX_COMPANIES_TO_INSPECT: "3",
@@ -114,6 +115,7 @@ describe("orchestration parallelization and capping smoke", () => {
   it("respects TINYFISH_INSPECTION_CONCURRENCY during polling", async () => {
     const restoreEnv = applyEnv({
       TINYFISH_API_KEY: "demo-key",
+      TINYFISH_ENABLE_LIVE_CALLS: "true",
       TINYFISH_FORCE_MOCK: "false",
       TINYFISH_ENABLE_MOCK_FALLBACK: "false",
       TINYFISH_MAX_COMPANIES_TO_INSPECT: "10",

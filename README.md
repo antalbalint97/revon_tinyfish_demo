@@ -1,6 +1,6 @@
 # Scoutbound
 
-Scoutbound is an autonomous outbound prospect sourcing application powered by TinyFish web agents. Scoutbound is designed as a sourcing module for the Revon outbound operations platform.
+Scoutbound is an autonomous outbound prospect sourcing application with TinyFish integration scaffolding. This repo is now configured to run in mock mode by default so a stray deploy or local run cannot trigger paid TinyFish traffic.
 
 ## What is public here
 
@@ -44,8 +44,8 @@ The database is file-backed, so completed sessions remain available after the in
 
 ## Live vs mock behavior
 
-- `live`: TinyFish API key is configured and the app is attempting real browser automation
-- `mock`: the run is explicitly using mock mode because `TINYFISH_FORCE_MOCK=true` or no API key is configured
+- `live`: TinyFish API key is configured and `TINYFISH_ENABLE_LIVE_CALLS=true`, so the app may attempt real browser automation
+- `mock`: the run is explicitly using mock mode because `TINYFISH_FORCE_MOCK=true`, live calls are disabled, or no API key is configured
 - `degraded`: the run completed partially, or the live path degraded into mock fallback, or some inspections failed
 
 The UI shows these states explicitly. Mock output is not presented as live output.
@@ -53,7 +53,7 @@ The UI shows these states explicitly. Mock output is not presented as live outpu
 ## Local development
 
 1. Copy `.env.example` to `.env`
-2. Set `TINYFISH_API_KEY` for live mode
+2. Leave `TINYFISH_ENABLE_LIVE_CALLS=false` unless you are intentionally testing paid TinyFish traffic
 3. Optionally configure `REVON_IMPORT_URL` and `REVON_API_TOKEN`
 4. Run `npm install`
 5. Run `npm run db:migrate`
@@ -69,6 +69,7 @@ The web app runs on `http://localhost:5173` and proxies `/api` to `http://localh
 - `VITE_API_BASE_URL`
 - `DATABASE_URL`
 - `TINYFISH_API_KEY`
+- `TINYFISH_ENABLE_LIVE_CALLS`
 - `TINYFISH_BASE_URL`
 - `TINYFISH_ASYNC_URL`
 - `TINYFISH_RUNS_BATCH_URL`
@@ -139,8 +140,8 @@ Backend:
 - `PORT`
 - `WEB_ORIGIN`
 - `DATABASE_URL`
-- `TINYFISH_API_KEY`
-- `TINYFISH_FORCE_MOCK=false`
+- `TINYFISH_ENABLE_LIVE_CALLS=false`
+- `TINYFISH_FORCE_MOCK=true`
 - `TINYFISH_ENABLE_MOCK_FALLBACK=true` or `false`
 - `REVON_DRY_RUN=true` unless you want real CRM sync
 - `REVON_IMPORT_URL` and `REVON_API_TOKEN` for live CRM handoff
@@ -157,8 +158,9 @@ NODE_ENV=production
 PORT=8787
 WEB_ORIGIN=https://tinyfish-demo.your-domain.com
 DATABASE_URL=/data/revon.sqlite
-TINYFISH_API_KEY=your_live_key
-TINYFISH_FORCE_MOCK=false
+TINYFISH_API_KEY=
+TINYFISH_ENABLE_LIVE_CALLS=false
+TINYFISH_FORCE_MOCK=true
 TINYFISH_ENABLE_MOCK_FALLBACK=true
 REVON_DRY_RUN=true
 ```
@@ -221,7 +223,7 @@ Recommended minimal backend requirements:
 
 - Node 22+
 - persistent disk for SQLite
-- outbound network access for TinyFish and optional CRM webhook calls
+- outbound network access for optional CRM webhook calls
 
 If your host does not support a persistent disk, keep the same code and move to Postgres later. For this hackathon repo, SQLite plus a disk is the thinnest reliable setup.
 
@@ -366,11 +368,11 @@ Recommended run settings:
 
 Before the demo:
 
-1. Confirm `.env` is present and `TINYFISH_API_KEY` is set
+1. Confirm `.env` is present and TinyFish stays disabled unless you intentionally re-enable it
 2. Decide whether CRM sync should be `live` or `dry-run`
 3. Start the app with `npm run dev`
 4. Open the UI and confirm the CRM destination badge is what you expect
-5. Use the recommended preset for the safest live path
+5. Use the recommended preset for the safest mock-only demo path
 
 During the demo:
 

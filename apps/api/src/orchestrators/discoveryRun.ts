@@ -135,6 +135,7 @@ async function persistRunSnapshotSafely(
 
 function resolveLiveMode(): { mode: RunMode; reason?: string; allowFallback: boolean } {
   const forceMock = (process.env.TINYFISH_FORCE_MOCK ?? "false").toLowerCase() === "true";
+  const liveCallsEnabled = (process.env.TINYFISH_ENABLE_LIVE_CALLS ?? "false").toLowerCase() === "true";
   const hasApiKey = Boolean(process.env.TINYFISH_API_KEY?.trim());
   const allowFallback = (process.env.TINYFISH_ENABLE_MOCK_FALLBACK ?? "true").toLowerCase() !== "false";
 
@@ -150,6 +151,15 @@ function resolveLiveMode(): { mode: RunMode; reason?: string; allowFallback: boo
     return {
       mode: "mock",
       reason: "TINYFISH_API_KEY is not configured, so the run is explicitly using mock mode.",
+      allowFallback,
+    };
+  }
+
+  if (!liveCallsEnabled) {
+    return {
+      mode: "mock",
+      reason:
+        "TINYFISH_ENABLE_LIVE_CALLS is not enabled, so live TinyFish network calls are blocked and the run is using mock mode.",
       allowFallback,
     };
   }

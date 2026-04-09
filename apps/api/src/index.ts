@@ -4,6 +4,7 @@ import { createApiApp, loadEnvironment } from "./app.js";
 loadEnvironment();
 
 console.log("TINYFISH_API_KEY loaded:", Boolean(process.env.TINYFISH_API_KEY));
+console.log("TINYFISH_ENABLE_LIVE_CALLS:", process.env.TINYFISH_ENABLE_LIVE_CALLS);
 console.log("TINYFISH_FORCE_MOCK:", process.env.TINYFISH_FORCE_MOCK);
 
 runMigrations();
